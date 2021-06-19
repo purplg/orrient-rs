@@ -62,14 +62,9 @@ impl TimerView {
         .style(Style::default().fg(color))
     }
 
-    fn new_meta_row<'a>(
-        name: String,
-        meta: MetaKey,
-        color: Color,
-        current_time_offset: Duration,
-    ) -> Row<'a> {
+    fn new_meta_row<'a>(meta: &MetaKey, time: Duration, name: String, color: Color) -> Row<'a> {
         // Collect the next upcoming 6 events in this meta
-        let mut meta_iter = meta.into_iter().fast_foward(current_time_offset);
+        let mut meta_iter = meta.into_iter().fast_foward(time);
         Row::new(vec![
             // Place the name of the Meta map in the first column
             Cell::from(name).style(
@@ -79,15 +74,15 @@ impl TimerView {
                     .add_modifier(Modifier::BOLD | Modifier::REVERSED),
             ),
             if let Some(event_instance) = meta_iter.now() {
-                Self::new_event_cell(event_instance, color, current_time_offset)
+                Self::new_event_cell(event_instance, color, time)
             } else {
-                Self::new_event_cell(meta_iter.next().unwrap(), color, current_time_offset)
+                Self::new_event_cell(meta_iter.next().unwrap(), color, time)
             },
-            Self::new_event_cell(meta_iter.next().unwrap(), color, current_time_offset),
-            Self::new_event_cell(meta_iter.next().unwrap(), color, current_time_offset),
-            Self::new_event_cell(meta_iter.next().unwrap(), color, current_time_offset),
-            Self::new_event_cell(meta_iter.next().unwrap(), color, current_time_offset),
-            Self::new_event_cell(meta_iter.next().unwrap(), color, current_time_offset),
+            Self::new_event_cell(meta_iter.next().unwrap(), color, time),
+            Self::new_event_cell(meta_iter.next().unwrap(), color, time),
+            Self::new_event_cell(meta_iter.next().unwrap(), color, time),
+            Self::new_event_cell(meta_iter.next().unwrap(), color, time),
+            Self::new_event_cell(meta_iter.next().unwrap(), color, time),
         ])
     }
 }
@@ -95,8 +90,7 @@ impl TimerView {
 impl View for TimerView {
     fn draw<B: tui::backend::Backend>(&mut self, frame: &mut Frame<B>, area: Rect) {
         let current_time = Utc::now().time();
-        let current_time_offset =
-            Duration::seconds(current_time.num_seconds_from_midnight() as i64);
+        let time = Duration::seconds(current_time.num_seconds_from_midnight() as i64);
         frame.render_widget(
             Table::new(
                 MetaKey::all_keys()
@@ -104,10 +98,10 @@ impl View for TimerView {
                     .map(|meta_key| {
                         let meta = meta_key.info();
                         Self::new_meta_row(
-                            meta.name.clone(),
                             meta_key,
+                            time,
+                            meta.name.clone(),
                             Self::meta_color(meta),
-                            current_time_offset,
                         )
                     })
                     .collect::<Vec<Row>>(),
