@@ -1,0 +1,63 @@
+use std::time::Duration;
+
+use crossterm::event::Event as CrosstermEvent;
+use crossterm::event::{EventStream, KeyCode};
+use futures::{FutureExt, StreamExt};
+use tokio::{select, sync::mpsc::UnboundedSender};
+
+use crate::events::{InputEvent, InputKind};
+
+pub struct Input {
+    tx_input: UnboundedSender<InputEvent>,
+}
+
+impl Input {
+    pub fn new(tx_input: UnboundedSender<InputEvent>) -> Input {
+        Input { tx_input }
+    }
+
+    pub async fn run(self) {
+        let mut reader = EventStream::new();
+
+        loop {
+            let delay = tokio::time::sleep(Duration::from_millis(500)).fuse();
+            let event = reader.next().fuse();
+            select! {
+                _ = delay => {},
+                Some(Ok(event)) = event => {let _ = self.tx_input.send(self.handle(event));}
+            }
+        }
+    }
+
+    fn handle(&self, event: CrosstermEvent) -> InputEvent {
+        if let CrosstermEvent::Key(keyevent) = event {
+            let input_kind = match keyevent.code {
+                KeyCode::Up | KeyCode::Char('k') | KeyCode::Char('w') => InputKind::MoveUp(1),
+                KeyCode::Down | KeyCode::Char('j') | KeyCode::Char('s') => InputKind::MoveDown(1),
+                KeyCode::PageUp => InputKind::MoveUp(100),
+                KeyCode::PageDown => InputKind::MoveDown(100),
+                KeyCode::Esc => InputKind::Back,
+                KeyCode::Home => InputKind::Top,
+                KeyCode::End => InputKind::Bottom,
+                KeyCode::Char('t') => InputKind::Track,
+                KeyCode::Char('q') => InputKind::Quit,
+                KeyCode::Char('/') => InputKind::Search,
+                KeyCode::Char('1') => InputKind::SwitchTab(0),
+                KeyCode::Char('2') => InputKind::SwitchTab(1),
+                KeyCode::Char('3') => InputKind::SwitchTab(2),
+                KeyCode::Char('4') => InputKind::SwitchTab(3),
+                _ => InputKind::Unhandled,
+            };
+
+            InputEvent {
+                input: input_kind,
+                key_code: Some(keyevent.code),
+            }
+        } else {
+            InputEvent {
+                input: InputKind::Unhandled,
+                key_code: None,
+            }
+        }
+    }
+}

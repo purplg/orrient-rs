@@ -1,0 +1,25 @@
+[package]
+name = "Orrient"
+version = "0.1.0"
+authors = ["Ben Whitley <dev@purplg.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+reqwest = { version = "^0.11.3", features = ["json"] }
+getopts = "^0.2"
+clap = "^2.33.3"
+serde = { version = "^1.0.117", features = ["derive"] }
+serde_json = "^1.0.59"
+serde_yaml = "^0.8.17"
+serde_derive = "^1.0"
+futures = "^0.3"
+tokio = { version = "^1.6.0", features = ["full"] }
+tui = { version = "^0.15.0", default-features = false, features = ['crossterm'] }
+log = "^0.4.14"
+fern = "^0.6.0"
+chrono = { version =  "^0.4.19", features = [ 'serde' ] }
+crossterm = { version = "^0.19.0", features = ['event-stream'] }
+flate2 = "^1.0"
+gw2timers = "^0.2.0"
