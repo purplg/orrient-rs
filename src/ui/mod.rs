@@ -125,6 +125,9 @@ impl UI {
     }
 
     pub fn handle_view_event(&mut self, view_event: ViewEvent) {
+        if let ViewEvent::Quit = view_event {
+            self.quit = true;
+        }
         self.status_view.handle_view_event(&view_event);
         self.tracks_view.handle_view_event(&view_event);
         self.achievements_view.handle_view_event(&view_event);

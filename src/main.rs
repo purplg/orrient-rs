@@ -5,6 +5,7 @@ mod client;
 mod config;
 mod events;
 mod fetch;
+mod signals;
 mod input;
 mod log;
 mod state;
@@ -15,11 +16,10 @@ use std::{fmt::Debug, rc::Rc, sync::Arc};
 
 use ::log::debug;
 use events::ViewEvent;
+use signal_hook::consts::{SIGINT, SIGQUIT, SIGTERM};
+use signal_hook_tokio::Signals;
 use state::AppState;
-use tokio::{
-    select,
-    sync::mpsc,
-};
+use tokio::{select, sync::mpsc::{self}};
 
 use crate::{
     cli::Options,
@@ -36,6 +36,7 @@ use crate::{
 extern crate serde_derive;
 extern crate fern;
 extern crate getopts;
+extern crate signal_hook;
 
 type Result = std::result::Result<(), Error>;
 
@@ -44,6 +45,7 @@ pub enum Error {
     Config(config::Error),
     Logger(fern::InitError),
     Client(client::Error),
+    Signal(std::io::Error),
 }
 
 #[tokio::main]
@@ -72,9 +74,12 @@ pub async fn main() -> Result {
         tracks_writer,
     );
     let fetch = Fetch::new(client, tx_event.clone());
-    let ui = UI::new(app_state.clone(), tx_event, rx_view_event);
+    let ui = UI::new(app_state.clone(), tx_event.clone(), rx_view_event);
+
+    let signals = Signals::new(&[SIGTERM, SIGINT, SIGQUIT]).map_err(Error::Signal)?;
 
     select! {
+        _ = crate::signals::handle_signals(signals, tx_event)=> {}
         _ = event_loop.run() => {}
         _ = fetch.run(60) => {}
         _ = ui.run() => {}

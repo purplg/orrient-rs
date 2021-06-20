@@ -18,6 +18,7 @@ pub enum Event {
 
 #[derive(Debug)]
 pub enum StateEvent {
+    Quit,
     LoadTracks(Vec<Track>),
     ToggleTrack(Track),
     FetchedAchievements {
@@ -56,6 +57,7 @@ pub enum ViewEvent {
     UpdateAchievements,
     UpdateAccountAchievements,
     UpdateDailies,
+    Quit,
 }
 
 #[derive(Debug)]
@@ -102,6 +104,7 @@ impl EventLoop {
                 let _ = self.tx_view.send(view_event);
             }
             Event::State(state_event) => match state_event {
+                StateEvent::Quit => { let _ = self.tx_view.send(ViewEvent::Quit); },
                 StateEvent::LoadTracks(tracks) => {
                     for track in tracks {
                         self.app_state.add_track(track);
