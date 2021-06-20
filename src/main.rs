@@ -79,7 +79,7 @@ pub async fn main() -> Result {
     let signals = Signals::new(&[SIGTERM, SIGINT, SIGQUIT]).map_err(Error::Signal)?;
 
     select! {
-        _ = crate::signals::handle_signals(signals, tx_event)=> {}
+        _ = crate::signals::handle_signals(signals, tx_event) => {}
         _ = event_loop.run() => {}
         _ = fetch.run(60) => {}
         _ = ui.run() => {}
