@@ -64,7 +64,8 @@ impl TimerView {
 
     fn new_meta_row<'a>(meta: &MapMetaKind, time: Duration, name: String, color: Color) -> Row<'a> {
         let mut meta_iter = meta.into_iter().fast_forward(time);
-        Row::new(vec![
+
+        Row::new([
             // Place the name of the Meta map in the first column
             Cell::from(name).style(
                 Style::default()
