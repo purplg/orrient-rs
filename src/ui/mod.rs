@@ -50,11 +50,12 @@ impl UI {
     pub fn new(
         app_state: Rc<AppState>,
         tx_event: UnboundedSender<Event>,
+        tx_view_event: UnboundedSender<ViewEvent>,
         rx_view_event: UnboundedReceiver<ViewEvent>,
     ) -> Self {
         let achievements_view = AchievementsView::new(app_state.clone(), tx_event.clone());
         let tracks_view = TracksView::new(app_state.clone(), tx_event);
-        let status_view = StatusView::new();
+        let status_view = StatusView::new(tx_view_event);
         let dailies_view = DailiesView::new(app_state.clone());
         let timer_view = TimerView::new();
 

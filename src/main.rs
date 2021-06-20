@@ -70,11 +70,11 @@ pub async fn main() -> Result {
         app_state.clone(),
         tx_event.clone(),
         rx_event,
-        tx_view_event,
+        tx_view_event.clone(),
         tracks_writer,
     );
     let fetch = Fetch::new(client, tx_event.clone());
-    let ui = UI::new(app_state.clone(), tx_event.clone(), rx_view_event);
+    let ui = UI::new(app_state.clone(), tx_event.clone(), tx_view_event.clone(), rx_view_event);
 
     let signals = Signals::new(&[SIGTERM, SIGINT, SIGQUIT]).map_err(Error::Signal)?;
 
