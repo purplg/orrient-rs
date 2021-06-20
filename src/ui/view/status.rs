@@ -29,7 +29,7 @@ impl StatusView {
 
 impl StatusView {
     fn start_timeout(&mut self) {
-        if let Some(handle) = self.status_timeout_handle.as_ref() {
+        if let Some(handle) = &self.status_timeout_handle {
             handle.abort();
         }
         self.status_timeout_handle = Some(status_timeout(self.tx_view_event.clone()));
