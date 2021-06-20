@@ -10,7 +10,7 @@ pub(crate) async fn handle_signals(signals: Signals, tx_event: UnboundedSender<E
     let mut signals = signals.fuse();
     while let Some(signal) = signals.next().await {
         match signal {
-            SIGINT| SIGQUIT | SIGTERM => {
+            SIGINT | SIGQUIT | SIGTERM => {
                 let _ = tx_event.send(Event::State(StateEvent::Quit));
             }
             _ => unreachable!(),
