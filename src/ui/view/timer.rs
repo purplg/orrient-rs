@@ -1,4 +1,4 @@
-use std::ops::Sub;
+use std::{iter, ops::Sub};
 
 use chrono::{Duration, Timelike, Utc};
 use gw2timers::{
@@ -17,11 +17,17 @@ use crate::events::{InputEvent, ViewEvent};
 
 use super::View;
 
-pub struct TimerView;
+pub struct TimerView {
+    heading_width: u16,
+    event_width: u16,
+}
 
 impl TimerView {
     pub fn new() -> Self {
-        Self
+        Self {
+            heading_width: 19,
+            event_width: 40,
+        }
     }
 
     fn meta_color(meta: MapMeta) -> Color {
@@ -62,34 +68,49 @@ impl TimerView {
         .style(Style::default().fg(color))
     }
 
-    fn new_meta_row<'a>(meta: &MapMetaKind, time: Duration, name: String, color: Color) -> Row<'a> {
+    fn new_meta_row<'a>(
+        meta: &MapMetaKind,
+        time: Duration,
+        name: String,
+        color: Color,
+        mut num_events: u16,
+    ) -> Row<'a> {
         let mut meta_iter = meta.into_iter().fast_forward(time);
 
-        Row::new([
-            // Place the name of the Meta map in the first column
-            Cell::from(name).style(
-                Style::default()
-                    .bg(Color::Black)
-                    .fg(color)
-                    .add_modifier(Modifier::BOLD | Modifier::REVERSED),
-            ),
-            // If there's an event happening now, display that instead of the next event
-            if let Some(event_instance) = meta_iter.now() {
-                Self::new_event_cell(event_instance, color, time)
-            } else {
-                Self::new_event_cell(meta_iter.next().unwrap(), color, time)
-            },
-            Self::new_event_cell(meta_iter.next().unwrap(), color, time),
-            Self::new_event_cell(meta_iter.next().unwrap(), color, time),
-            Self::new_event_cell(meta_iter.next().unwrap(), color, time),
-            Self::new_event_cell(meta_iter.next().unwrap(), color, time),
-            Self::new_event_cell(meta_iter.next().unwrap(), color, time),
-        ])
+        let heading = Cell::from(name).style(
+            Style::default()
+                .bg(Color::Black)
+                .fg(color)
+                .add_modifier(Modifier::BOLD | Modifier::REVERSED),
+        );
+
+        let first_column = if let Some(event_instance) = meta_iter.now() {
+            num_events -= 1;
+            Self::new_event_cell(event_instance, color, time)
+        } else {
+            Self::new_event_cell(meta_iter.next().unwrap(), color, time)
+        };
+
+        let mut remaining_columns = meta_iter
+            .take(num_events as usize)
+            .map(|e| Self::new_event_cell(e, color, time))
+            .collect::<Vec<Cell>>();
+        remaining_columns.insert(0, heading);
+        remaining_columns.insert(1, first_column);
+
+        Row::new(remaining_columns)
     }
 }
 
 impl View for TimerView {
     fn draw<B: tui::backend::Backend>(&mut self, frame: &mut Frame<B>, area: Rect) {
+        let num_events = area.width / self.event_width;
+        let event_area_width = area.width - self.heading_width;
+        let mut constaints = iter::repeat(Constraint::Length(event_area_width / num_events))
+            .take(num_events as usize)
+            .collect::<Vec<Constraint>>();
+        constaints.insert(0, Constraint::Length(18));
+
         let current_time = Utc::now().time();
         let time = Duration::seconds(current_time.num_seconds_from_midnight() as i64);
         frame.render_widget(
@@ -103,19 +124,12 @@ impl View for TimerView {
                             time,
                             meta.name.clone(),
                             Self::meta_color(meta),
+                            num_events,
                         )
                     })
                     .collect::<Vec<Row>>(),
             )
-            .widths(&[
-                Constraint::Percentage(10),
-                Constraint::Percentage(15),
-                Constraint::Percentage(15),
-                Constraint::Percentage(15),
-                Constraint::Percentage(15),
-                Constraint::Percentage(15),
-                Constraint::Percentage(15),
-            ]),
+            .widths(&constaints),
             area,
         );
     }

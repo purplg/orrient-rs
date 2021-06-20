@@ -19,7 +19,7 @@ use events::ViewEvent;
 use signal_hook::consts::{SIGINT, SIGQUIT, SIGTERM};
 use signal_hook_tokio::Signals;
 use state::AppState;
-use tokio::{select, sync::mpsc::{self}};
+use tokio::{select, sync::mpsc};
 
 use crate::{
     cli::Options,
