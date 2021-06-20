@@ -11,15 +11,15 @@ use crate::{
 
 pub struct Fetch {
     client: Arc<CachedClient>,
-    tx_state_change: UnboundedSender<Event>,
+    tx_state: UnboundedSender<Event>,
     all_achievement_ids: Vec<usize>,
 }
 
 impl Fetch {
-    pub fn new(client: Arc<CachedClient>, tx_state_change: UnboundedSender<Event>) -> Fetch {
+    pub fn new(client: Arc<CachedClient>, tx_state: UnboundedSender<Event>) -> Fetch {
         Fetch {
             client,
-            tx_state_change,
+            tx_state,
             all_achievement_ids: Vec::default(),
         }
     }
@@ -51,12 +51,12 @@ impl Fetch {
                 Ok(achievements) => {
                     let progress: f64 = current_page as f64 / (total_pages - 1) as f64;
                     let _ =
-                        self.tx_state_change
+                        self.tx_state
                             .send(Event::State(StateEvent::FetchedAchievements {
                                 achievements,
                             }));
                     let _ = self
-                        .tx_state_change
+                        .tx_state
                         .send(Event::State(StateEvent::UpdateStatus(format!(
                             "Loading achievements... {}%",
                             (progress * 100.0) as u64
@@ -68,10 +68,10 @@ impl Fetch {
             }
         }
         let _ = self
-            .tx_state_change
+            .tx_state
             .send(Event::State(StateEvent::AchievementsLoaded));
         let _ = self
-            .tx_state_change
+            .tx_state
             .send(Event::State(StateEvent::UpdateStatus(
                 "Done loading achievements...".to_string(),
             )));
@@ -90,13 +90,13 @@ impl Fetch {
     async fn fetch_account_achievements(&self) {
         match self.client.request::<AllAccountAchievements>().await {
             Ok(all_account_achievements) => {
-                let _ = self.tx_state_change.send(Event::State(
+                let _ = self.tx_state.send(Event::State(
                     StateEvent::FetchedAccountAchievements {
                         all_account_achievements,
                     },
                 ));
                 let _ = self
-                    .tx_state_change
+                    .tx_state
                     .send(Event::State(StateEvent::UpdateStatus(
                         "Updated achievement progress".to_string(),
                     )));
@@ -110,7 +110,7 @@ impl Fetch {
         match self.client.request::<Dailies>().await {
             Ok(dailies) => {
                 let _ = self
-                    .tx_state_change
+                    .tx_state
                     .send(Event::State(StateEvent::FetchedDailies(dailies)));
             }
             Err(err) => debug!("Error fetching Dailies: {:?}", err),

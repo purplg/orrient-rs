@@ -23,7 +23,7 @@ use super::View;
 
 pub struct TracksView {
     app_state: Rc<AppState>,
-    tx_state_update: UnboundedSender<Event>,
+    tx_state: UnboundedSender<Event>,
     list_state: ListState,
     tier_progress_bar_height: u16,
     achievements: HashMap<usize, Achievement>,
@@ -32,10 +32,10 @@ pub struct TracksView {
 }
 
 impl TracksView {
-    pub fn new(app_state: Rc<AppState>, tx_state_update: UnboundedSender<Event>) -> Self {
+    pub fn new(app_state: Rc<AppState>, tx_state: UnboundedSender<Event>) -> Self {
         TracksView {
             app_state,
-            tx_state_update,
+            tx_state,
             list_state: ListState::default(),
             tier_progress_bar_height: 1,
             achievements: HashMap::default(),
@@ -178,11 +178,9 @@ impl View for TracksView {
             }
             InputKind::Track => {
                 if let Some(id) = self.selected_id() {
-                    let _ = self
-                        .tx_state_update
-                        .send(Event::State(StateEvent::ToggleTrack(Track::Achievement(
-                            id,
-                        ))));
+                    let _ = self.tx_state.send(Event::State(StateEvent::ToggleTrack(
+                        Track::Achievement(id),
+                    )));
                 }
                 true
             }
