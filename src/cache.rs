@@ -174,7 +174,7 @@ impl CacheItem<usize> for Achievement {
             .contents
             .achievements
             .read()
-            .map(|cache| cache.get(&id).cloned())
+            .map(|cache| cache.get(id).cloned())
             .ok()
             .flatten()
             .filter(|cached_item| !cached_item.expired())

@@ -59,7 +59,7 @@ impl CachedClient {
         let cached_items: Vec<E> = params
             .iter()
             .map(|param| {
-                E::from_cache(&self.cache, &param).or_else(|| {
+                E::from_cache(&self.cache, param).or_else(|| {
                     request_items.push(param);
                     None
                 })
@@ -114,7 +114,7 @@ impl GW2Client {
             .get(format!("{}/{}", self.gateway, E::get_path(vec![&()])))
             .headers(self.get_headers::<E, ()>()?);
 
-        let response: reqwest::Response = request_builder.send().await.map_err(|err| Error::Request(err))?;
+        let response: reqwest::Response = request_builder.send().await.map_err(Error::Request)?;
         match response.text().await {
             Ok(text) => match serde_json::from_str::<E>(text.as_str()) {
                 Ok(endpoint) => Ok(endpoint),
@@ -134,7 +134,7 @@ impl GW2Client {
             .get(format!("{}/{}", self.gateway, E::get_path(params)))
             .headers(self.get_headers::<E, P>()?);
 
-        let response: reqwest::Response = request_builder.send().await.map_err(|err| Error::Request(err))?;
+        let response: reqwest::Response = request_builder.send().await.map_err(Error::Request)?;
         match response.text().await {
             Ok(text) => match serde_json::from_str::<Vec<E>>(text.as_str()) {
                 Ok(endpoint) => Ok(endpoint),

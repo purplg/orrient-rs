@@ -157,7 +157,7 @@ impl View for AchievementsView {
             .map(|achievement| (achievement, self.account_achievements.get(&achievement.id)))
             .map(|(achievement, account_achievement)| {
                 Self::new_list_item(
-                    &achievement,
+                    achievement,
                     account_achievement,
                     self.app_state.is_tracked(Some(achievement.id)),
                     &self.style,

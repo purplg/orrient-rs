@@ -85,7 +85,7 @@ fn open_config(path: &Path) -> Result<String> {
     }
 }
 
-fn parse_config(config: &String) -> Result<Config> {
+fn parse_config(config: &'_ str) -> Result<Config> {
     match serde_yaml::from_str(config) {
         Ok(config) => Ok(config),
         Err(error) => Err(Error::InvalidYaml(error)),

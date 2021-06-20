@@ -51,9 +51,9 @@ pub enum Error {
 #[tokio::main]
 pub async fn main() -> Result {
     let options = Options::new();
-    let config: Config = Config::load(options).map_err(|err| Error::Config(err))?;
+    let config: Config = Config::load(options).map_err(Error::Config)?;
 
-    setup_logger(&config).map_err(|err| Error::Logger(err))?;
+    setup_logger(&config).map_err(Error::Logger)?;
     debug!("{:?}", config);
 
     let (tx_event, rx_event) = mpsc::unbounded_channel::<Event>();
@@ -64,7 +64,7 @@ pub async fn main() -> Result {
 
     let app_state = Rc::new(AppState::new(&config));
 
-    let client = Arc::new(CachedClient::new(config).map_err(|err| Error::Client(err))?);
+    let client = Arc::new(CachedClient::new(config).map_err(Error::Client)?);
 
     let event_loop = EventLoop::new(
         app_state.clone(),
