@@ -1,9 +1,4 @@
-use std::rc::Rc;
-
-use crate::{
-    events::{InputEvent, ViewEvent},
-    state::AppState,
-};
+use crate::events::{InputEvent, ViewEvent};
 use tui::{
     layout::Rect,
     widgets::{Block, Borders, Paragraph},
@@ -13,19 +8,21 @@ use tui::{
 use super::View;
 
 pub struct StatusView {
-    app_state: Rc<AppState>,
+    message: String,
 }
 
 impl StatusView {
-    pub fn new(app_state: Rc<AppState>) -> Self {
-        StatusView { app_state }
+    pub fn new() -> Self {
+        StatusView {
+            message: String::default(),
+        }
     }
 }
 
 impl View for StatusView {
     fn draw<B: tui::backend::Backend>(&mut self, frame: &mut Frame<B>, area: Rect) {
         frame.render_widget(
-            Paragraph::new(self.app_state.status()).block(Block::default().borders(Borders::TOP)),
+            Paragraph::new(self.message.as_str()).block(Block::default().borders(Borders::TOP)),
             area,
         );
     }
@@ -34,5 +31,9 @@ impl View for StatusView {
         false
     }
 
-    fn handle_view_event(&mut self, _: &ViewEvent) {}
+    fn handle_view_event(&mut self, view_event: &ViewEvent) {
+        if let ViewEvent::UpdateStatus(message) = view_event {
+            self.message = message.clone();
+        }
+    }
 }

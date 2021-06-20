@@ -28,7 +28,6 @@ pub enum StateEvent {
         all_account_achievements: AllAccountAchievements,
     },
     AchievementsLoaded,
-    UpdateStatus(String),
     FetchedDailies(Dailies),
 }
 
@@ -57,6 +56,7 @@ pub enum ViewEvent {
     UpdateAchievements,
     UpdateAccountAchievements,
     UpdateDailies,
+    UpdateStatus(String),
     Quit,
 }
 
@@ -145,7 +145,6 @@ impl EventLoop {
                     self.app_state.set_dailies(dailies);
                     let _ = self.tx_event.send(Event::View(ViewEvent::UpdateDailies));
                 }
-                StateEvent::UpdateStatus(message) => self.app_state.set_status(message),
             },
         }
     }

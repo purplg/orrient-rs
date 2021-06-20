@@ -3,11 +3,7 @@ use std::{sync::Arc, time::Duration};
 use log::debug;
 use tokio::sync::mpsc::UnboundedSender;
 
-use crate::{
-    api::{Achievement, AllAccountAchievements, AllAchievementIDs, Dailies},
-    client::CachedClient,
-    events::{Event, StateEvent},
-};
+use crate::{api::{Achievement, AllAccountAchievements, AllAchievementIDs, Dailies}, client::CachedClient, events::{Event, StateEvent, ViewEvent}};
 
 pub struct Fetch {
     client: Arc<CachedClient>,
@@ -57,7 +53,7 @@ impl Fetch {
                             }));
                     let _ = self
                         .tx_state
-                        .send(Event::State(StateEvent::UpdateStatus(format!(
+                        .send(Event::View(ViewEvent::UpdateStatus(format!(
                             "Loading achievements... {}%",
                             (progress * 100.0) as u64
                         ))));
@@ -72,7 +68,7 @@ impl Fetch {
             .send(Event::State(StateEvent::AchievementsLoaded));
         let _ = self
             .tx_state
-            .send(Event::State(StateEvent::UpdateStatus(
+            .send(Event::View(ViewEvent::UpdateStatus(
                 "Done loading achievements...".to_string(),
             )));
         self.client.write_cache();
@@ -97,7 +93,7 @@ impl Fetch {
                 ));
                 let _ = self
                     .tx_state
-                    .send(Event::State(StateEvent::UpdateStatus(
+                    .send(Event::View(ViewEvent::UpdateStatus(
                         "Updated achievement progress".to_string(),
                     )));
             }

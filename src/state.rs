@@ -11,7 +11,6 @@ pub struct AppState {
     achievements: RwLock<HashMap<usize, Achievement>>,
     account_achievements: RwLock<HashMap<usize, AccountAchievement>>,
     tracked_achievements: RwLock<Vec<usize>>,
-    status_message: RwLock<String>,
     dailies: RwLock<Option<Dailies>>,
 }
 
@@ -22,7 +21,6 @@ impl AppState {
             achievements: RwLock::new(HashMap::default()),
             account_achievements: RwLock::new(HashMap::default()),
             tracked_achievements: RwLock::new(Vec::default()),
-            status_message: RwLock::new(String::default()),
             dailies: RwLock::new(None),
         }
     }
@@ -105,20 +103,6 @@ impl AppState {
         match self.current_tab.read() {
             Ok(current_tab) => Some(*current_tab),
             _ => None,
-        }
-    }
-
-    pub fn set_status(&self, message: String) {
-        if let Ok(mut status_message) = self.status_message.write() {
-            *status_message = message;
-        }
-    }
-
-    pub fn status(&self) -> String {
-        if let Ok(status_message) = self.status_message.read() {
-            status_message.clone()
-        } else {
-            String::default()
         }
     }
 
