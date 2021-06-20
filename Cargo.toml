@@ -1,5 +1,5 @@
 [package]
-name = "Orrient"
+name = "orrient"
 version = "0.1.0"
 authors = ["Ben Whitley <dev@purplg.com>"]
 edition = "2018"
