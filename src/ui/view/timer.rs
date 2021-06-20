@@ -4,7 +4,7 @@ use chrono::{Duration, Timelike, Utc};
 use gw2timers::{
     category::Category,
     event::EventInstance,
-    meta::{Meta, MetaKey},
+    meta::{MapMeta, MapMetaKind},
 };
 use tui::{
     layout::{Constraint, Rect},
@@ -24,7 +24,7 @@ impl TimerView {
         Self
     }
 
-    fn meta_color(meta: Meta) -> Color {
+    fn meta_color(meta: MapMeta) -> Color {
         match meta.category {
             Category::CoreTyria => Color::LightBlue,
             Category::LivingWorldSeason2 => Color::Yellow,
@@ -62,9 +62,9 @@ impl TimerView {
         .style(Style::default().fg(color))
     }
 
-    fn new_meta_row<'a>(meta: &MetaKey, time: Duration, name: String, color: Color) -> Row<'a> {
+    fn new_meta_row<'a>(meta: &MapMetaKind, time: Duration, name: String, color: Color) -> Row<'a> {
         // Collect the next upcoming 6 events in this meta
-        let mut meta_iter = meta.into_iter().fast_foward(time);
+        let mut meta_iter = meta.into_iter().fast_forward(time);
         Row::new(vec![
             // Place the name of the Meta map in the first column
             Cell::from(name).style(
@@ -93,8 +93,8 @@ impl View for TimerView {
         let time = Duration::seconds(current_time.num_seconds_from_midnight() as i64);
         frame.render_widget(
             Table::new(
-                MetaKey::all_keys()
-                    .into_iter()
+                MapMetaKind::all_keys()
+                    .iter()
                     .map(|meta_key| {
                         let meta = meta_key.info();
                         Self::new_meta_row(
