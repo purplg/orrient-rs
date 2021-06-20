@@ -14,6 +14,7 @@ pub struct Options {
     pub cache_path: Option<String>,
     pub cache_age: Option<Duration>,
     pub cache_compression: bool,
+    pub starting_tab: Option<usize>,
 }
 
 impl Default for Options {
@@ -27,6 +28,7 @@ impl Default for Options {
             cache_path: None,
             cache_age: None,
             cache_compression: false,
+            starting_tab: None,
         }
     }
 }
@@ -84,6 +86,12 @@ impl Options {
                     .short("z")
                     .long("cache-compress")
                     .help("Compress the cache file"),
+                Arg::with_name("starting-tab")
+                    .short("t")
+                    .long("starting-tab")
+                    .value_name("TAB_NUMBER")
+                    .takes_value(true)
+                    .help("The tab number to open on."),
             ])
             .get_matches();
 
@@ -108,6 +116,10 @@ impl Options {
         options.offline = matches.is_present("offline");
         options.verbose = matches.is_present("verbose");
         options.cache_compression = matches.is_present("cache-compression");
+        options.starting_tab = matches
+            .value_of("starting-tab")
+            .map(|starting_tab| starting_tab.parse::<usize>().ok())
+            .flatten();
 
         options
     }

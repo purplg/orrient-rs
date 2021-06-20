@@ -2,6 +2,7 @@ use std::{collections::HashMap, sync::RwLock};
 
 use crate::{
     api::{AccountAchievement, Achievement, AllAccountAchievements, Dailies},
+    config::Config,
     tracks::Track,
 };
 
@@ -15,9 +16,9 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub fn new() -> Self {
+    pub fn new(config: &Config) -> Self {
         Self {
-            current_tab: RwLock::new(0),
+            current_tab: RwLock::new(config.starting_tab - 1),
             achievements: RwLock::new(HashMap::default()),
             account_achievements: RwLock::new(HashMap::default()),
             tracked_achievements: RwLock::new(Vec::default()),

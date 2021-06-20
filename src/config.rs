@@ -29,6 +29,8 @@ pub struct Config {
     pub cache_age: Duration,
     #[serde(default)]
     pub cache_compression: bool,
+    #[serde(default = "default_starting_tab")]
+    pub starting_tab: usize,
 }
 
 impl Config {
@@ -69,6 +71,10 @@ impl Config {
         if options.cache_compression {
             self.cache_compression = options.cache_compression;
         }
+
+        if let Some(starting_tab) = options.starting_tab {
+            self.starting_tab = starting_tab;
+        }
     }
 }
 
@@ -92,6 +98,10 @@ fn default_cache_path() -> String {
 
 fn default_cache_age() -> Duration {
     Duration::days(1)
+}
+
+fn default_starting_tab() -> usize {
+    1
 }
 
 mod duration_seconds {
