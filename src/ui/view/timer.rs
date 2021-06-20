@@ -63,7 +63,6 @@ impl TimerView {
     }
 
     fn new_meta_row<'a>(meta: &MapMetaKind, time: Duration, name: String, color: Color) -> Row<'a> {
-        // Collect the next upcoming 6 events in this meta
         let mut meta_iter = meta.into_iter().fast_forward(time);
         Row::new(vec![
             // Place the name of the Meta map in the first column
@@ -73,6 +72,7 @@ impl TimerView {
                     .fg(color)
                     .add_modifier(Modifier::BOLD | Modifier::REVERSED),
             ),
+            // If there's an event happening now, display that instead of the next event
             if let Some(event_instance) = meta_iter.now() {
                 Self::new_event_cell(event_instance, color, time)
             } else {
