@@ -9,7 +9,7 @@ use gw2timers::{
 use tui::{
     layout::{Constraint, Rect},
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, Cell, Row, Table},
+    widgets::{Cell, Row, Table},
     Frame,
 };
 
