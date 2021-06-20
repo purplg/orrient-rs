@@ -115,8 +115,7 @@ impl View for TimerView {
                 Constraint::Percentage(15),
                 Constraint::Percentage(15),
                 Constraint::Percentage(15),
-            ])
-            .block(Block::default().borders(Borders::TOP)),
+            ]),
             area,
         );
     }
