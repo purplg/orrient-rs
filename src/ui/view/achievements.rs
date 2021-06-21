@@ -19,7 +19,7 @@ use crate::{
     events::{CursorMovement, Event, InputEvent, InputKind, StateEvent, ViewEvent},
     state::AppState,
     tracks::Track,
-    ui::{component::achievement_info::AchievementInfo, widget::ListSelection},
+    ui::{component::achievement_info::AchievementInfo, widget::list_selection::ListSelection},
 };
 
 use super::View;

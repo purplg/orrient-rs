@@ -9,7 +9,7 @@ use crate::{
         component::{
             achievement_info::AchievementInfo, achievement_progress_info::AchievementProgressInfo,
         },
-        widget::ListSelection,
+        widget::list_selection::ListSelection,
     },
 };
 use tokio::sync::mpsc::UnboundedSender;
