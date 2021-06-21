@@ -1,3 +1,4 @@
+use crate::ui::widget::text_box::TextBox;
 use std::{
     collections::{BTreeMap, HashMap},
     rc::Rc,
@@ -6,10 +7,10 @@ use std::{
 use crossterm::event::KeyCode;
 use tokio::sync::mpsc::UnboundedSender;
 use tui::{
-    layout::{Constraint, Direction, Layout, Margin, Rect},
+    layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::Text,
-    widgets::{Block, Borders, List, ListItem, ListState, Paragraph},
+    widgets::{Block, Borders, List, ListItem, ListState},
     Frame,
 };
 
@@ -129,27 +130,30 @@ impl AchievementsView {
 
 impl View for AchievementsView {
     fn draw<B: tui::backend::Backend>(&mut self, frame: &mut Frame<B>, area: Rect) {
-        let v_chunks = if self.searching {
-            let v_constraints = vec![Constraint::Min(10), Constraint::Length(3)];
-            Layout::default()
-                .direction(Direction::Vertical)
-                .constraints(v_constraints)
-        } else {
-            Layout::default()
-                .direction(Direction::Vertical)
-                .constraints([Constraint::Min(10)])
-        }
-        .split(area);
-
-        let h_chunks = Layout::default()
+        // LAYOUTS
+        let horiz_layout = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([Constraint::Min(50), Constraint::Percentage(100)])
-            .split(v_chunks[0].inner(&Margin {
-                horizontal: 0,
-                vertical: 0,
-            }));
+            .split(area);
 
-        // Filter list with search string
+        let (main_panel, list_panel, search_panel) =
+            if !self.searching && self.search_string.is_empty() {
+                let left_layout = Layout::default()
+                    .direction(Direction::Vertical)
+                    .constraints([Constraint::Percentage(100)])
+                    .split(horiz_layout[0]);
+
+                (horiz_layout[1], left_layout[0], None)
+            } else {
+                let left_layout = Layout::default()
+                    .direction(Direction::Vertical)
+                    .constraints([Constraint::Length(2), Constraint::Percentage(100)])
+                    .split(horiz_layout[0]);
+
+                (horiz_layout[1], left_layout[1], Some(left_layout[0]))
+            };
+
+        // ACHIEVEMENT LIST
         let list_items = self
             .visible_list_ids
             .iter()
@@ -165,12 +169,13 @@ impl View for AchievementsView {
             })
             .collect::<Vec<ListItem>>();
 
-        // Render the achievement list in the left sidebar
+        // RENDER
+        // achievement list in the left sidebar
         frame.render_stateful_widget(
             List::new(list_items)
                 .block(Block::default().borders(Borders::RIGHT))
                 .highlight_symbol(">>"),
-            h_chunks[0],
+            list_panel,
             &mut self.list_state,
         );
 
@@ -184,16 +189,21 @@ impl View for AchievementsView {
 
             frame.render_widget(
                 AchievementInfo::new_widget(achievement, account_achievement),
-                h_chunks[1],
+                main_panel,
             );
         }
 
         // Render the bottom bar to display filter search
-        if let Some(bottom_panel_chunk) = v_chunks.get(1) {
+        if let Some(bottom_panel_chunk) = search_panel {
             frame.render_widget(
-                Paragraph::new(Text::from(self.search_string.as_str()))
-                    .block(Block::default().borders(Borders::ALL)),
-                *bottom_panel_chunk,
+                TextBox::new(&self.search_string)
+                    .block(Block::default().borders(Borders::BOTTOM | Borders::RIGHT))
+                    .style(if self.searching {
+                        Style::default()
+                    } else {
+                        Style::default().add_modifier(Modifier::DIM)
+                    }),
+                bottom_panel_chunk,
             );
         }
     }

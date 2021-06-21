@@ -1,4 +1,5 @@
 // A widget a generic UI component for displaying some information
+pub mod text_box;
 
 use std::cmp::min;
 

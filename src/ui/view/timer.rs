@@ -71,7 +71,7 @@ impl TimerView {
     fn new_meta_row<'a>(
         meta: &MapMetaKind,
         time: Duration,
-        name: String,
+        name: &'static str,
         color: Color,
         mut num_events: u16,
     ) -> Row<'a> {
@@ -122,7 +122,7 @@ impl View for TimerView {
                         Self::new_meta_row(
                             meta_key,
                             time,
-                            meta.name.clone(),
+                            meta.name,
                             Self::meta_color(meta),
                             num_events,
                         )
