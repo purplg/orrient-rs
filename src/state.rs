@@ -61,7 +61,7 @@ impl AppState {
 
     pub fn add_track(&self, track: Track) {
         if let Ok(mut tracked_achievements) = self.tracked_achievements.write() {
-            if tracked_achievements.iter().any(|id| *id == track.id()) {
+            if !tracked_achievements.iter().any(|id| *id == track.id()) {
                 tracked_achievements.push(track.id());
             }
         }
