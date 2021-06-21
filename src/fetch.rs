@@ -88,16 +88,14 @@ impl Fetch {
     async fn fetch_account_achievements(&self) {
         match self.client.request::<AllAccountAchievements>().await {
             Ok(all_account_achievements) => {
-                let _ = self.tx_state.send(Event::State(
-                    StateEvent::FetchedAccountAchievements {
-                        all_account_achievements,
-                    },
-                ));
                 let _ = self
                     .tx_state
-                    .send(Event::View(ViewEvent::UpdateStatus(
-                        "Updated achievement progress".to_string(),
-                    )));
+                    .send(Event::State(StateEvent::FetchedAccountAchievements {
+                        all_account_achievements,
+                    }));
+                let _ = self.tx_state.send(Event::View(ViewEvent::UpdateStatus(
+                    "Updated achievement progress".to_string(),
+                )));
             }
             Err(err) => debug!("Error fetching AllAccountAchievements: {:?}", err),
         }
