@@ -158,8 +158,8 @@ impl View for AchievementsView {
             .visible_list_ids
             .iter()
             .filter_map(|id| self.achievements.get(id))
-            .map(|achievement| (achievement, self.account_achievements.get(&achievement.id)))
-            .map(|(achievement, account_achievement)| {
+            .map(|achievement| {
+                let account_achievement = self.account_achievements.get(&achievement.id);
                 Self::new_list_item(
                     achievement,
                     account_achievement,
