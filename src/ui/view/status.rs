@@ -14,7 +14,7 @@ use super::View;
 pub struct StatusView {
     message: String,
     tx_view_event: UnboundedSender<ViewEvent>,
-    status_timeout_handle: Option<JoinHandle<()>>
+    status_timeout_handle: Option<JoinHandle<()>>,
 }
 
 impl StatusView {

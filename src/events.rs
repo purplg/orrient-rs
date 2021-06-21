@@ -104,7 +104,9 @@ impl EventLoop {
                 let _ = self.tx_view.send(view_event);
             }
             Event::State(state_event) => match state_event {
-                StateEvent::Quit => { let _ = self.tx_view.send(ViewEvent::Quit); },
+                StateEvent::Quit => {
+                    let _ = self.tx_view.send(ViewEvent::Quit);
+                }
                 StateEvent::LoadTracks(tracks) => {
                     for track in tracks {
                         self.app_state.add_track(track);

@@ -3,7 +3,11 @@ use std::{fmt::Debug, hash::Hash, sync::Arc};
 use reqwest::header::HeaderMap;
 use serde::de::DeserializeOwned;
 
-use crate::{api::endpoints::Endpoint, cache::{Cache, CacheItem}, config::Config};
+use crate::{
+    api::endpoints::Endpoint,
+    cache::{Cache, CacheItem},
+    config::Config,
+};
 
 type Result<T> = std::result::Result<T, Error>;
 
