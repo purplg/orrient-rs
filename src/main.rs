@@ -5,9 +5,9 @@ mod client;
 mod config;
 mod events;
 mod fetch;
-mod signals;
 mod input;
 mod log;
+mod signals;
 mod state;
 mod tracks;
 mod ui;
@@ -28,6 +28,7 @@ use crate::{
     events::{Event, EventLoop, StateEvent},
     fetch::Fetch,
     log::setup_logger,
+    signals::handle_signals,
     tracks::{Reader, Track},
     ui::UI,
 };
@@ -74,12 +75,17 @@ pub async fn main() -> Result {
         tracks_writer,
     );
     let fetch = Fetch::new(client, tx_event.clone());
-    let ui = UI::new(app_state.clone(), tx_event.clone(), tx_view_event.clone(), rx_view_event);
+    let ui = UI::new(
+        app_state.clone(),
+        tx_event.clone(),
+        tx_view_event.clone(),
+        rx_view_event,
+    );
 
     let signals = Signals::new(&[SIGTERM, SIGINT, SIGQUIT]).map_err(Error::Signal)?;
 
     select! {
-        _ = crate::signals::handle_signals(signals, tx_event) => {}
+        _ = handle_signals(signals, tx_event) => {}
         _ = event_loop.run() => {}
         _ = fetch.run(60) => {}
         _ = ui.run() => {}
