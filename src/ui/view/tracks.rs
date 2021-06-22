@@ -45,8 +45,8 @@ impl TracksView {
             achievements: HashMap::default(),
             account_achievements: HashMap::default(),
             tracks: Vec::default(),
-            add_textbox_content: String::from("test"),
-            inserting: true,
+            add_textbox_content: String::default(),
+            inserting: false,
         }
     }
 
