@@ -20,6 +20,7 @@ pub enum Event {
 pub enum StateEvent {
     Quit,
     LoadTracks(Vec<Track>),
+    AddTrack(Track),
     ToggleTrack(Track),
     FetchedAchievements {
         achievements: Vec<Achievement>,
@@ -111,6 +112,16 @@ impl EventLoop {
                 StateEvent::LoadTracks(tracks) => {
                     for track in tracks {
                         self.app_state.add_track(track);
+                    }
+                    let _ = self.tx_event.send(Event::View(ViewEvent::UpdateTracks));
+                }
+                StateEvent::AddTrack(track) => {
+                    self.app_state.add_track(track);
+                    let tracks = self
+                        .app_state
+                        .tracked_items();
+                    if let Err(err) = self.tracks_writer.write(tracks) {
+                        error!("Error writing tracks: {}", err);
                     }
                     let _ = self.tx_event.send(Event::View(ViewEvent::UpdateTracks));
                 }

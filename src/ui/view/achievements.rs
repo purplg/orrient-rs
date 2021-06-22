@@ -212,7 +212,7 @@ impl View for AchievementsView {
     fn handle_input_event(&mut self, event: &InputEvent) -> bool {
         if self.searching {
             if let Some(key_code) = event.key_code {
-                return match key_code {
+                match key_code {
                     KeyCode::Enter => {
                         self.searching = false;
                         true
@@ -239,9 +239,10 @@ impl View for AchievementsView {
                     | KeyCode::End
                     | KeyCode::Delete => false,
                     _ => false,
-                };
+                }
+            } else {
+                false
             }
-            false
         } else {
             match event.input {
                 InputKind::MoveUp(amount) => {

@@ -9,13 +9,15 @@ use crate::{
         component::{
             achievement_info::AchievementInfo, achievement_progress_info::AchievementProgressInfo,
         },
-        widget::list_selection::ListSelection,
+        widget::{list_selection::ListSelection, text_box::TextBox},
     },
 };
+use crossterm::event::KeyCode;
 use tokio::sync::mpsc::UnboundedSender;
 use tui::{
     layout::{Constraint, Direction, Layout, Rect},
-    widgets::{Block, Borders, List, ListItem, ListState},
+    style::{Modifier, Style},
+    widgets::{Block, Borders, Clear, List, ListItem, ListState},
     Frame,
 };
 
@@ -29,6 +31,8 @@ pub struct TracksView {
     achievements: HashMap<usize, Achievement>,
     account_achievements: HashMap<usize, AccountAchievement>,
     tracks: Vec<Track>,
+    add_textbox_content: String,
+    inserting: bool,
 }
 
 impl TracksView {
@@ -41,6 +45,8 @@ impl TracksView {
             achievements: HashMap::default(),
             account_achievements: HashMap::default(),
             tracks: Vec::default(),
+            add_textbox_content: String::from("test"),
+            inserting: true,
         }
     }
 
@@ -158,6 +164,28 @@ impl TracksView {
             area,
         );
     }
+
+    fn draw_popup<B: tui::backend::Backend>(&self, frame: &mut Frame<B>, area: Rect) {
+        let (width, height) = (30, 3);
+        if area.width < width || area.height < height {
+            return;
+        }
+
+        let x = (area.width - width) / 2;
+        let y = (area.height - height) / 2;
+
+        let area = Rect::new(x, y, width, height);
+        let widget = TextBox::new(&self.add_textbox_content)
+            .style(Style::default().add_modifier(Modifier::REVERSED))
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title("Add custom item"),
+            );
+
+        frame.render_widget(Clear, area);
+        frame.render_widget(widget, area)
+    }
 }
 
 impl View for TracksView {
@@ -166,6 +194,7 @@ impl View for TracksView {
             .direction(Direction::Horizontal)
             .constraints([Constraint::Min(50), Constraint::Percentage(100)])
             .split(area);
+
         self.draw_sidebar(frame, h_chunks[0]);
 
         if let Some(track) = self.selected_track() {
@@ -174,33 +203,79 @@ impl View for TracksView {
                 Track::Custom(_) => {}
             }
         }
+
+        if self.inserting {
+            self.draw_popup(frame, area);
+        }
     }
 
     fn handle_input_event(&mut self, event: &InputEvent) -> bool {
-        match event.input {
-            InputKind::MoveUp(amount) => {
-                self.list_state.move_cursor(
-                    self.app_state.tracked_items().len(),
-                    CursorMovement::Up(amount),
-                );
-                true
-            }
-            InputKind::MoveDown(amount) => {
-                self.list_state.move_cursor(
-                    self.app_state.tracked_items().len(),
-                    CursorMovement::Down(amount),
-                );
-                true
-            }
-            InputKind::Track => {
-                if let Some(track) = self.selected_track() {
-                    let _ = self
-                        .tx_state
-                        .send(Event::State(StateEvent::ToggleTrack(track)));
+        if self.inserting {
+            if let Some(key_code) = event.key_code {
+                match key_code {
+                    KeyCode::Enter => {
+                        self.inserting = false;
+                        let _ =
+                            self.tx_state
+                                .send(Event::State(StateEvent::AddTrack(Track::Custom(
+                                    self.add_textbox_content.clone(),
+                                ))));
+                        self.add_textbox_content.clear();
+                        true
+                    }
+                    KeyCode::Esc => {
+                        self.inserting = false;
+                        self.add_textbox_content.clear();
+                        true
+                    }
+                    KeyCode::Char(letter) => {
+                        self.add_textbox_content.push(letter);
+                        true
+                    }
+                    KeyCode::Backspace => {
+                        self.add_textbox_content.pop();
+                        true
+                    }
+                    KeyCode::Left
+                    | KeyCode::Right
+                    | KeyCode::Home
+                    | KeyCode::End
+                    | KeyCode::Delete => false,
+                    _ => false,
                 }
-                true
+            } else {
+                false
             }
-            _ => false,
+        } else {
+            match event.input {
+                InputKind::MoveUp(amount) => {
+                    self.list_state.move_cursor(
+                        self.app_state.tracked_items().len(),
+                        CursorMovement::Up(amount),
+                    );
+                    true
+                }
+                InputKind::MoveDown(amount) => {
+                    self.list_state.move_cursor(
+                        self.app_state.tracked_items().len(),
+                        CursorMovement::Down(amount),
+                    );
+                    true
+                }
+                InputKind::Track => {
+                    if let Some(track) = self.selected_track() {
+                        let _ = self
+                            .tx_state
+                            .send(Event::State(StateEvent::ToggleTrack(track)));
+                    }
+                    true
+                }
+                InputKind::Add => {
+                    self.inserting = !self.inserting;
+                    true
+                }
+                _ => false,
+            }
         }
     }
 
