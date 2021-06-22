@@ -103,6 +103,7 @@ impl TracksView {
                                 },
                             ))
                         }
+                        Track::Custom(item) => ListItem::new(item.as_str()),
                     })
                     .collect::<Vec<ListItem>>(),
             )
@@ -164,6 +165,7 @@ impl View for TracksView {
         if let Some(track) = self.selected_track() {
             match track {
                 Track::Achievement(id) => self.draw_achievement_info(id, frame, h_chunks[1]),
+                Track::Custom(_) => {}
             }
         }
     }

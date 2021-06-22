@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub enum Track {
     Achievement(usize),
+    Custom(String),
 }
 
 impl Reader<'_, Track> for Track {
