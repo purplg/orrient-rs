@@ -52,6 +52,37 @@ impl TracksView {
         }
     }
 
+    fn new_list_item<'a>(&self, track: &'a Track) -> ListItem<'a> {
+        match track {
+            Track::Achievement(id) => {
+                let account_achievement = self.account_achievements.get(id);
+                let current = account_achievement.map(|aa| aa.current).flatten();
+                let max = account_achievement.map(|aa| aa.max).flatten();
+                let percent_complete = if let (Some(current), Some(max)) = (current, max) {
+                    Some(((current as f64) / (max as f64) * 100f64) as u16)
+                } else {
+                    None
+                };
+
+                let achievement_name = self
+                    .achievements
+                    .get(id)
+                    .map(|a| a.name.clone())
+                    .unwrap_or_default();
+
+                ListItem::new(
+                    percent_complete.map_or(
+                        format!("       {}", achievement_name),
+                        |percent_complete| {
+                            format!("({:>3}%) {}", percent_complete, achievement_name)
+                        },
+                    ),
+                )
+            }
+            Track::Custom(item) => ListItem::new(format!("       {}", item)),
+        }
+    }
+
     fn draw_achievement_info<B: tui::backend::Backend>(
         &mut self,
         achievement_id: usize,
@@ -79,32 +110,7 @@ impl TracksView {
             List::new(
                 self.tracks
                     .iter()
-                    .map(|track| match track {
-                        Track::Achievement(id) => {
-                            let account_achievement = self.account_achievements.get(id);
-                            let current =
-                                account_achievement.as_ref().map(|aa| aa.current).flatten();
-                            let max = account_achievement.map(|aa| aa.max).flatten();
-                            let percent_complete =
-                                if let (Some(current), Some(max)) = (current, max) {
-                                    Some(((current as f64) / (max as f64) * 100f64) as u16)
-                                } else {
-                                    None
-                                };
-                            let achievement_name = self
-                                .achievements
-                                .get(id)
-                                .map(|a| a.name.clone())
-                                .unwrap_or_default();
-                            ListItem::new(percent_complete.map_or(
-                                achievement_name.to_string(),
-                                |percent_complete| {
-                                    format!("({:>3}%) {}", percent_complete, achievement_name)
-                                },
-                            ))
-                        }
-                        Track::Custom(item) => ListItem::new(item.as_str()),
-                    })
+                    .map(|track| self.new_list_item(track))
                     .collect::<Vec<ListItem>>(),
             )
             .block(Block::default().borders(Borders::RIGHT))
