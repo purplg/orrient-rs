@@ -10,7 +10,7 @@ pub struct AppState {
     current_tab: RwLock<usize>,
     achievements: RwLock<HashMap<usize, Achievement>>,
     account_achievements: RwLock<HashMap<usize, AccountAchievement>>,
-    tracked_achievements: RwLock<Vec<usize>>,
+    tracked_items: RwLock<Vec<Track>>,
     dailies: RwLock<Option<Dailies>>,
 }
 
@@ -20,7 +20,7 @@ impl AppState {
             current_tab: RwLock::new(config.starting_tab - 1),
             achievements: RwLock::new(HashMap::default()),
             account_achievements: RwLock::new(HashMap::default()),
-            tracked_achievements: RwLock::new(Vec::default()),
+            tracked_items: RwLock::new(Vec::default()),
             dailies: RwLock::new(None),
         }
     }
@@ -60,34 +60,34 @@ impl AppState {
     }
 
     pub fn add_track(&self, track: Track) {
-        if let Ok(mut tracked_achievements) = self.tracked_achievements.write() {
-            if !tracked_achievements.iter().any(|id| *id == track.id()) {
-                tracked_achievements.push(track.id());
+        if let Ok(mut tracked_items) = self.tracked_items.write() {
+            if tracked_items.iter().find(|t| (*t).eq(&track)).is_none() {
+                tracked_items.push(track);
             }
         }
     }
 
     pub fn toggle_track(&self, track: Track) {
-        if let Ok(mut tracked_achievements) = self.tracked_achievements.write() {
-            if let Some(index) = tracked_achievements.iter().position(|t| *t == track.id()) {
+        if let Ok(mut tracked_achievements) = self.tracked_items.write() {
+            if let Some(index) = tracked_achievements.iter().position(|t| t.eq(&track)) {
                 tracked_achievements.remove(index);
             } else {
-                tracked_achievements.push(track.id());
+                tracked_achievements.push(track);
             }
         }
     }
 
-    pub fn tracked_achievements(&self) -> Vec<usize> {
-        if let Ok(tracked_achievements) = self.tracked_achievements.read() {
-            tracked_achievements.clone()
+    pub fn tracked_items(&self) -> Vec<Track> {
+        if let Ok(tracked_items) = self.tracked_items.read() {
+            tracked_items.clone()
         } else {
             Vec::default()
         }
     }
 
-    pub fn is_tracked(&self, id: Option<usize>) -> bool {
-        if let (Some(id), Ok(tracked_achievements)) = (id, self.tracked_achievements.read()) {
-            tracked_achievements.contains(&id)
+    pub fn is_tracked(&self, track: Track) -> bool {
+        if let Ok(tracked_items) = self.tracked_items.read() {
+            tracked_items.contains(&track)
         } else {
             false
         }

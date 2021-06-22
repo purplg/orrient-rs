@@ -14,7 +14,7 @@ use crate::{
 };
 use tokio::sync::mpsc::UnboundedSender;
 use tui::{
-    layout::{Constraint, Direction, Layout, Margin, Rect},
+    layout::{Constraint, Direction, Layout, Rect},
     widgets::{Block, Borders, List, ListItem, ListState},
     Frame,
 };
@@ -28,7 +28,7 @@ pub struct TracksView {
     tier_progress_bar_height: u16,
     achievements: HashMap<usize, Achievement>,
     account_achievements: HashMap<usize, AccountAchievement>,
-    tracks: Vec<usize>,
+    tracks: Vec<Track>,
 }
 
 impl TracksView {
@@ -44,11 +44,33 @@ impl TracksView {
         }
     }
 
-    fn selected_id(&self) -> Option<usize> {
+    fn selected_track(&self) -> Option<Track> {
         if let Some(selected_index) = self.list_state.selected() {
             self.tracks.get(selected_index).map(ToOwned::to_owned)
         } else {
             None
+        }
+    }
+
+    fn draw_achievement_info<B: tui::backend::Backend>(
+        &mut self,
+        achievement_id: usize,
+        frame: &mut Frame<B>,
+        area: Rect,
+    ) {
+        if let Some(achievement) = self.achievements.get(&achievement_id) {
+            let account_achievement = self.account_achievements.get(&achievement.id);
+            let progress_height = achievement.tiers.len() as u16 * self.tier_progress_bar_height;
+            let info_chunks: Vec<Rect> = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([
+                    Constraint::Min(progress_height),
+                    Constraint::Percentage(100),
+                ])
+                .split(area);
+
+            self.draw_progress(frame, info_chunks[0], &achievement, account_achievement);
+            self.draw_info(frame, info_chunks[1], &achievement, account_achievement)
         }
     }
 
@@ -57,26 +79,30 @@ impl TracksView {
             List::new(
                 self.tracks
                     .iter()
-                    .map(|id| {
-                        let account_achievement = self.account_achievements.get(id);
-                        let current = account_achievement.as_ref().map(|aa| aa.current).flatten();
-                        let max = account_achievement.map(|aa| aa.max).flatten();
-                        let percent_complete = if let (Some(current), Some(max)) = (current, max) {
-                            Some(((current as f64) / (max as f64) * 100f64) as u16)
-                        } else {
-                            None
-                        };
-                        let achievement_name = self
-                            .achievements
-                            .get(id)
-                            .map(|a| a.name.clone())
-                            .unwrap_or_default();
-                        ListItem::new(percent_complete.map_or(
-                            achievement_name.to_string(),
-                            |percent_complete| {
-                                format!("({:>3}%) {}", percent_complete, achievement_name)
-                            },
-                        ))
+                    .map(|track| match track {
+                        Track::Achievement(id) => {
+                            let account_achievement = self.account_achievements.get(id);
+                            let current =
+                                account_achievement.as_ref().map(|aa| aa.current).flatten();
+                            let max = account_achievement.map(|aa| aa.max).flatten();
+                            let percent_complete =
+                                if let (Some(current), Some(max)) = (current, max) {
+                                    Some(((current as f64) / (max as f64) * 100f64) as u16)
+                                } else {
+                                    None
+                                };
+                            let achievement_name = self
+                                .achievements
+                                .get(id)
+                                .map(|a| a.name.clone())
+                                .unwrap_or_default();
+                            ListItem::new(percent_complete.map_or(
+                                achievement_name.to_string(),
+                                |percent_complete| {
+                                    format!("({:>3}%) {}", percent_complete, achievement_name)
+                                },
+                            ))
+                        }
                     })
                     .collect::<Vec<ListItem>>(),
             )
@@ -135,28 +161,10 @@ impl View for TracksView {
             .split(area);
         self.draw_sidebar(frame, h_chunks[0]);
 
-        if let Some(achievement) = self
-            .selected_id()
-            .map(|achievement_id| self.achievements.get(&achievement_id))
-            .flatten()
-        {
-            let account_achievement = self.account_achievements.get(&achievement.id);
-
-            let progress_height = achievement.tiers.len() as u16 * self.tier_progress_bar_height;
-
-            let info_chunks: Vec<Rect> = Layout::default()
-                .direction(Direction::Vertical)
-                .constraints([
-                    Constraint::Min(progress_height),
-                    Constraint::Percentage(100),
-                ])
-                .split(h_chunks[1].inner(&Margin {
-                    horizontal: 0,
-                    vertical: 0,
-                }));
-
-            self.draw_progress(frame, info_chunks[0], achievement, account_achievement);
-            self.draw_info(frame, info_chunks[1], achievement, account_achievement)
+        if let Some(track) = self.selected_track() {
+            match track {
+                Track::Achievement(id) => self.draw_achievement_info(id, frame, h_chunks[1]),
+            }
         }
     }
 
@@ -164,23 +172,23 @@ impl View for TracksView {
         match event.input {
             InputKind::MoveUp(amount) => {
                 self.list_state.move_cursor(
-                    self.app_state.tracked_achievements().len(),
+                    self.app_state.tracked_items().len(),
                     CursorMovement::Up(amount),
                 );
                 true
             }
             InputKind::MoveDown(amount) => {
                 self.list_state.move_cursor(
-                    self.app_state.tracked_achievements().len(),
+                    self.app_state.tracked_items().len(),
                     CursorMovement::Down(amount),
                 );
                 true
             }
             InputKind::Track => {
-                if let Some(id) = self.selected_id() {
-                    let _ = self.tx_state.send(Event::State(StateEvent::ToggleTrack(
-                        Track::Achievement(id),
-                    )));
+                if let Some(track) = self.selected_track() {
+                    let _ = self
+                        .tx_state
+                        .send(Event::State(StateEvent::ToggleTrack(track)));
                 }
                 true
             }
@@ -197,7 +205,7 @@ impl View for TracksView {
                 self.account_achievements = self.app_state.account_achievements();
             }
             ViewEvent::UpdateTracks => {
-                self.tracks = self.app_state.tracked_achievements();
+                self.tracks = self.app_state.tracked_items();
                 self.list_state
                     .move_cursor(self.tracks.len(), CursorMovement::None);
             }

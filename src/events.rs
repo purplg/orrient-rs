@@ -45,6 +45,7 @@ pub enum InputKind {
     Back,
     Quit,
     Track,
+    Add,
     Search,
     SwitchTab(usize),
     Unhandled,
@@ -117,10 +118,7 @@ impl EventLoop {
                     self.app_state.toggle_track(track);
                     let tracks = self
                         .app_state
-                        .tracked_achievements()
-                        .iter()
-                        .map(|id| Track::Achievement(*id))
-                        .collect::<Vec<Track>>();
+                        .tracked_items();
                     if let Err(err) = self.tracks_writer.write(tracks) {
                         error!("Error writing tracks: {}", err);
                     }

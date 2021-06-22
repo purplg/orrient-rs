@@ -163,7 +163,8 @@ impl View for AchievementsView {
                 Self::new_list_item(
                     achievement,
                     account_achievement,
-                    self.app_state.is_tracked(Some(achievement.id)),
+                    self.app_state
+                        .is_tracked(Track::Achievement(achievement.id)),
                     &self.style,
                 )
             })

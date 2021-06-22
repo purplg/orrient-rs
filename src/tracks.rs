@@ -2,23 +2,9 @@ use std::{fs::File, io::BufWriter, marker::PhantomData, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub enum Track {
     Achievement(usize),
-}
-
-impl PartialEq for Track {
-    fn eq(&self, other: &Self) -> bool {
-        self.id() == other.id()
-    }
-}
-
-impl Track {
-    pub fn id(&self) -> usize {
-        match self {
-            Track::Achievement(id) => *id,
-        }
-    }
 }
 
 impl Reader<'_, Track> for Track {

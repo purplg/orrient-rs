@@ -40,6 +40,7 @@ impl Input {
                 KeyCode::Home => InputKind::Top,
                 KeyCode::End => InputKind::Bottom,
                 KeyCode::Char('t') => InputKind::Track,
+                KeyCode::Char('a') => InputKind::Add,
                 KeyCode::Char('q') => InputKind::Quit,
                 KeyCode::Char('/') => InputKind::Search,
                 KeyCode::Char('1') => InputKind::SwitchTab(0),
