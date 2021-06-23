@@ -48,18 +48,16 @@ struct AddTrackPopup {
 
 impl TracksView {
     pub fn new(app_state: Rc<AppState>, tx_state: UnboundedSender<Event>) -> Self {
-        let mut list_state = ListState::default();
-        list_state.select(Some(0));
         TracksView {
             app_state,
             tx_state,
-            list_state,
+            list_state: ListState::default(),
             tier_progress_bar_height: 1,
             achievements: HashMap::default(),
             account_achievements: HashMap::default(),
             tracks: Vec::default(),
             add_track_popup: AddTrackPopup::default(),
-            inserting: true,
+            inserting: false,
         }
     }
 
@@ -236,59 +234,63 @@ impl TracksView {
         if let Some(key_code) = event.key_code {
             match key_code {
                 KeyCode::Enter => {
-                    if let Some(selected_i) = self.add_track_popup.list_state.selected() {
-                        match selected_i {
-                            0 => {
-                                self.inserting = false;
-                                let _ = self.tx_state.send(Event::State(StateEvent::AddTrack(
-                                    Track::Custom(self.add_track_popup.content.clone()),
-                                )));
-                                self.add_track_popup.content.clear();
-                                true
-                            }
-                            1 => {
-                                self.add_track_popup.checkbox_state.toggle();
-                                true
-                            }
-                            _ => false,
-                        }
-                    } else {
-                        false
+                    if !self.add_track_popup.content.is_empty() {
+                        self.inserting = false;
+                        let _ =
+                            self.tx_state
+                                .send(Event::State(StateEvent::AddTrack(Track::Custom(
+                                    self.add_track_popup.content.clone(),
+                                ))));
+                        self.add_track_popup.content.clear();
+                        return true;
                     }
                 }
                 KeyCode::Esc => {
                     self.inserting = false;
                     self.add_track_popup.content.clear();
-                    true
-                }
-                KeyCode::Char(letter) => {
-                    self.add_track_popup.content.push(letter);
-                    true
-                }
-                KeyCode::Backspace => {
-                    self.add_track_popup.content.pop();
-                    true
+                    return true;
                 }
                 KeyCode::Up => {
                     self.add_track_popup
                         .list_state
                         .move_cursor(2, CursorMovement::Up(1));
-                    true
+                    return true;
                 }
                 KeyCode::Down => {
                     self.add_track_popup
                         .list_state
                         .move_cursor(2, CursorMovement::Down(1));
-                    true
+                    return true;
                 }
-                KeyCode::Left | KeyCode::Right | KeyCode::Home | KeyCode::End | KeyCode::Delete => {
-                    false
-                }
-                _ => false,
+                _ => {}
             }
-        } else {
-            false
+            if let Some(selected_i) = self.add_track_popup.list_state.selected() {
+                match selected_i {
+                    // Textbox selected
+                    0 => match key_code {
+                        KeyCode::Char(letter) => {
+                            self.add_track_popup.content.push(letter);
+                            return true;
+                        }
+                        KeyCode::Backspace => {
+                            self.add_track_popup.content.pop();
+                            return true;
+                        }
+                        _ => {}
+                    },
+                    // Checkbox selected
+                    1 => match key_code {
+                        KeyCode::Char(' ') => {
+                            self.add_track_popup.checkbox_state.toggle();
+                            return true;
+                        }
+                        _ => {}
+                    },
+                    _ => {}
+                }
+            }
         }
+        false
     }
 }
 
@@ -341,7 +343,8 @@ impl View for TracksView {
                     true
                 }
                 InputKind::Add => {
-                    self.inserting = !self.inserting;
+                    self.inserting = true;
+                    self.add_track_popup.list_state.select(Some(0));
                     true
                 }
                 _ => false,
