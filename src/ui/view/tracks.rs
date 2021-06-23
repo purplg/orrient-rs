@@ -12,7 +12,7 @@ use crate::{
         widget::{
             checkbox::{Checkbox, CheckboxState},
             list_selection::ListSelection,
-            text_box::TextBox,
+            text_box::Textbox,
         },
     },
 };
@@ -217,7 +217,7 @@ impl TracksView {
         .highlight_symbol(">")
         .style(style);
 
-        let input_box = TextBox::new(&self.add_track_popup.content)
+        let input_box = Textbox::new(&self.add_track_popup.content)
             .style(style.patch(Style::default().remove_modifier(Modifier::REVERSED)));
 
         let check_box = Checkbox::new("Checkbox!").style(style);

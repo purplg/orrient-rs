@@ -1,4 +1,4 @@
-use crate::ui::widget::text_box::TextBox;
+use crate::ui::widget::text_box::Textbox;
 use std::{
     collections::{BTreeMap, HashMap},
     rc::Rc,
@@ -197,7 +197,7 @@ impl View for AchievementsView {
         // Render the bottom bar to display filter search
         if let Some(bottom_panel_chunk) = search_panel {
             frame.render_widget(
-                TextBox::new(&self.search_string)
+                Textbox::new(&self.search_string)
                     .block(Block::default().borders(Borders::BOTTOM | Borders::RIGHT))
                     .style(if self.searching {
                         Style::default()

@@ -5,13 +5,13 @@ use tui::{
     widgets::{Block, Widget},
 };
 
-pub struct TextBox<'a> {
+pub struct Textbox<'a> {
     style: Style,
     block: Option<Block<'a>>,
     content: &'a str,
 }
 
-impl<'a> TextBox<'a> {
+impl<'a> Textbox<'a> {
     pub fn new(content: &'a str) -> Self {
         Self {
             content,
@@ -31,7 +31,7 @@ impl<'a> TextBox<'a> {
     }
 }
 
-impl<'a> Widget for TextBox<'a> {
+impl<'a> Widget for Textbox<'a> {
     fn render(mut self, area: Rect, buf: &mut Buffer) {
         buf.set_style(area, self.style);
         let text_box_area = match self.block.take() {
