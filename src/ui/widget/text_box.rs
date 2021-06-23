@@ -1,20 +1,20 @@
+use std::mem;
+
 use tui::{
     buffer::Buffer,
     layout::Rect,
     style::Style,
-    widgets::{Block, Widget},
+    widgets::{Block, StatefulWidget, Widget},
 };
 
 pub struct Textbox<'a> {
     style: Style,
     block: Option<Block<'a>>,
-    content: &'a str,
 }
 
 impl<'a> Textbox<'a> {
-    pub fn new(content: &'a str) -> Self {
+    pub fn new() -> Self {
         Self {
-            content,
             style: Style::default(),
             block: None,
         }
@@ -31,8 +31,10 @@ impl<'a> Textbox<'a> {
     }
 }
 
-impl<'a> Widget for Textbox<'a> {
-    fn render(mut self, area: Rect, buf: &mut Buffer) {
+impl<'a> StatefulWidget for Textbox<'a> {
+    type State = TextboxState;
+
+    fn render(mut self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
         buf.set_style(area, self.style);
         let text_box_area = match self.block.take() {
             Some(block) => {
@@ -50,9 +52,51 @@ impl<'a> Widget for Textbox<'a> {
         buf.set_stringn(
             text_box_area.x,
             text_box_area.y,
-            self.content,
+            state.content(),
             text_box_area.width as usize,
             self.style,
         );
+    }
+}
+
+impl<'a> Widget for Textbox<'a> {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        <Self as StatefulWidget>::render(self, area, buf, &mut TextboxState::default());
+    }
+}
+
+#[derive(Default)]
+pub struct TextboxState {
+    content: String,
+    cursor_position: u16,
+}
+
+impl TextboxState {
+    pub fn clear(&mut self) {
+        self.content.clear();
+    }
+
+    pub fn content(&self) -> &String {
+        &self.content
+    }
+
+    pub fn cursor_position(&self) -> u16 {
+        self.content.len() as u16
+    }
+
+    pub fn insert_character(&mut self, c: char) {
+        self.content.insert(self.cursor_position() as usize, c);
+        self.cursor_position += 1;
+    }
+
+    pub fn remove_character(&mut self) {
+        if self.cursor_position() > 0 {
+            self.content.remove(self.cursor_position() as usize - 1);
+            self.cursor_position -= 1;
+        }
+    }
+
+    pub fn take(&mut self) -> String {
+        mem::take(&mut self.content)
     }
 }

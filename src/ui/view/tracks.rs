@@ -12,7 +12,7 @@ use crate::{
         widget::{
             checkbox::{Checkbox, CheckboxState},
             list_selection::ListSelection,
-            text_box::Textbox,
+            text_box::{Textbox, TextboxState},
         },
     },
 };
@@ -41,7 +41,7 @@ pub struct TracksView {
 
 #[derive(Default)]
 struct AddTrackPopup {
-    content: String,
+    textbox_state: TextboxState,
     checkbox_state: CheckboxState,
     list_state: ListState,
 }
@@ -217,37 +217,48 @@ impl TracksView {
         .highlight_symbol(">")
         .style(style);
 
-        let input_box = Textbox::new(&self.add_track_popup.content)
-            .style(style.patch(Style::default().remove_modifier(Modifier::REVERSED)));
+        let input_box =
+            Textbox::new().style(style.patch(Style::default().remove_modifier(Modifier::REVERSED)));
 
         let check_box = Checkbox::new("Checkbox!").style(style);
+
         frame.render_stateful_widget(list, h_chunks[0], &mut self.add_track_popup.list_state);
-        frame.render_widget(input_box, v_chunks[0]);
+        frame.render_stateful_widget(
+            input_box,
+            v_chunks[0],
+            &mut self.add_track_popup.textbox_state,
+        );
         frame.render_stateful_widget(
             check_box,
             v_chunks[1],
             &mut self.add_track_popup.checkbox_state,
         );
+
+        if let Some(0) = self.add_track_popup.list_state.selected() {
+            let x = v_chunks[0].x + self.add_track_popup.textbox_state.cursor_position();
+            let y = v_chunks[0].y;
+            frame.set_cursor(x, y);
+        }
     }
 
     fn handle_input_popup(&mut self, event: &InputEvent) -> bool {
         if let Some(key_code) = event.key_code {
             match key_code {
                 KeyCode::Enter => {
-                    if !self.add_track_popup.content.is_empty() {
+                    if !self.add_track_popup.textbox_state.content().is_empty() {
                         self.inserting = false;
                         let _ =
                             self.tx_state
                                 .send(Event::State(StateEvent::AddTrack(Track::Custom(
-                                    self.add_track_popup.content.clone(),
+                                    self.add_track_popup.textbox_state.take(),
                                 ))));
-                        self.add_track_popup.content.clear();
+                        self.add_track_popup.textbox_state = TextboxState::default();
                         return true;
                     }
                 }
                 KeyCode::Esc => {
                     self.inserting = false;
-                    self.add_track_popup.content.clear();
+                    self.add_track_popup.textbox_state = TextboxState::default();
                     return true;
                 }
                 KeyCode::Up => {
@@ -269,11 +280,11 @@ impl TracksView {
                     // Textbox selected
                     0 => match key_code {
                         KeyCode::Char(letter) => {
-                            self.add_track_popup.content.push(letter);
+                            self.add_track_popup.textbox_state.insert_character(letter);
                             return true;
                         }
                         KeyCode::Backspace => {
-                            self.add_track_popup.content.pop();
+                            self.add_track_popup.textbox_state.remove_character();
                             return true;
                         }
                         _ => {}

@@ -1,4 +1,4 @@
-use crate::ui::widget::text_box::Textbox;
+use crate::ui::widget::text_box::{Textbox, TextboxState};
 use std::{
     collections::{BTreeMap, HashMap},
     rc::Rc,
@@ -35,12 +35,12 @@ struct AchievementStatusStyles {
 pub struct AchievementsView {
     app_state: Rc<AppState>,
     list_state: ListState,
+    textbox_state: TextboxState,
     achievements: BTreeMap<usize, Achievement>,
     account_achievements: HashMap<usize, AccountAchievement>,
     tx_state: UnboundedSender<Event>,
     visible_list_ids: Vec<usize>,
     searching: bool,
-    search_string: String,
     style: AchievementStatusStyles,
 }
 
@@ -50,11 +50,11 @@ impl AchievementsView {
             app_state,
             tx_state,
             list_state: ListState::default(),
+            textbox_state: TextboxState::default(),
             achievements: BTreeMap::default(),
             account_achievements: HashMap::default(),
             visible_list_ids: Vec::default(),
             searching: false,
-            search_string: String::default(),
             style: AchievementStatusStyles {
                 normal: Style::default(),
                 done: Style::default().fg(Color::Green),
@@ -109,7 +109,7 @@ impl AchievementsView {
                 if achievement
                     .name
                     .to_lowercase()
-                    .contains(&self.search_string.to_lowercase())
+                    .contains(&self.textbox_state.content().to_lowercase())
                 {
                     Some(*id)
                 } else {
@@ -137,7 +137,7 @@ impl View for AchievementsView {
             .split(area);
 
         let (main_panel, list_panel, search_panel) =
-            if !self.searching && self.search_string.is_empty() {
+            if !self.searching && self.textbox_state.content().is_empty() {
                 let left_layout = Layout::default()
                     .direction(Direction::Vertical)
                     .constraints([Constraint::Percentage(100)])
@@ -196,8 +196,8 @@ impl View for AchievementsView {
 
         // Render the bottom bar to display filter search
         if let Some(bottom_panel_chunk) = search_panel {
-            frame.render_widget(
-                Textbox::new(&self.search_string)
+            frame.render_stateful_widget(
+                Textbox::new()
                     .block(Block::default().borders(Borders::BOTTOM | Borders::RIGHT))
                     .style(if self.searching {
                         Style::default()
@@ -205,6 +205,7 @@ impl View for AchievementsView {
                         Style::default().add_modifier(Modifier::DIM)
                     }),
                 bottom_panel_chunk,
+                &mut self.textbox_state,
             );
         }
     }
@@ -218,18 +219,18 @@ impl View for AchievementsView {
                         true
                     }
                     KeyCode::Esc => {
-                        self.search_string = "".to_string();
+                        self.textbox_state.clear();
                         self.update_filter();
                         self.searching = false;
                         true
                     }
                     KeyCode::Char(letter) => {
-                        self.search_string.push(letter);
+                        self.textbox_state.insert_character(letter);
                         self.update_filter();
                         true
                     }
                     KeyCode::Backspace => {
-                        self.search_string.pop();
+                        self.textbox_state.remove_character();
                         self.update_filter();
                         true
                     }
@@ -271,7 +272,7 @@ impl View for AchievementsView {
                     true
                 }
                 InputKind::Back => {
-                    self.search_string = "".to_string();
+                    self.textbox_state.clear();
                     self.update_filter();
                     true
                 }
