@@ -81,7 +81,7 @@ impl TextboxState {
     }
 
     pub fn cursor_position(&self) -> u16 {
-        self.content.len() as u16
+        self.cursor_position
     }
 
     pub fn insert_character(&mut self, c: char) {
