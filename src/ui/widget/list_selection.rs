@@ -23,7 +23,7 @@ impl ListSelection for ListState {
                     }
                 }
                 CursorMovement::Down(amount) => selected + amount,
-                CursorMovement::None => selected,
+                _ => selected,
             };
             selected = min(selected, total_items - 1);
             Some(selected)

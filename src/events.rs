@@ -64,6 +64,8 @@ pub enum ViewEvent {
 
 #[derive(Debug)]
 pub enum CursorMovement {
+    Left(usize),
+    Right(usize),
     Up(usize),
     Down(usize),
     None,

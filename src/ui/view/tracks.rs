@@ -287,6 +287,16 @@ impl TracksView {
                             self.add_track_popup.textbox_state.remove_character();
                             return true;
                         }
+                        KeyCode::Left => {
+                            self.add_track_popup
+                                .textbox_state
+                                .move_cursor(CursorMovement::Left(1));
+                        }
+                        KeyCode::Right => {
+                            self.add_track_popup
+                                .textbox_state
+                                .move_cursor(CursorMovement::Right(1));
+                        }
                         _ => {}
                     },
                     // Checkbox selected

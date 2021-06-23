@@ -1,4 +1,7 @@
-use std::mem;
+use std::{
+    cmp::{max, min},
+    mem,
+};
 
 use tui::{
     buffer::Buffer,
@@ -6,6 +9,8 @@ use tui::{
     style::Style,
     widgets::{Block, StatefulWidget, Widget},
 };
+
+use crate::events::CursorMovement;
 
 pub struct Textbox<'a> {
     style: Style,
@@ -93,6 +98,21 @@ impl TextboxState {
         if self.cursor_position() > 0 {
             self.content.remove(self.cursor_position() as usize - 1);
             self.cursor_position -= 1;
+        }
+    }
+
+    pub fn move_cursor(&mut self, movement: CursorMovement) {
+        match movement {
+            CursorMovement::Left(amount) => {
+                self.cursor_position -= min(self.cursor_position, amount as u16);
+            }
+            CursorMovement::Right(amount) => {
+                self.cursor_position += min(
+                    amount as u16,
+                    self.content.len() as u16 - self.cursor_position,
+                );
+            }
+            _ => {}
         }
     }
 
