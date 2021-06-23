@@ -9,7 +9,11 @@ use crate::{
         component::{
             achievement_info::AchievementInfo, achievement_progress_info::AchievementProgressInfo,
         },
-        widget::{list_selection::ListSelection, text_box::TextBox},
+        widget::{
+            checkbox::{Checkbox, CheckboxState},
+            list_selection::ListSelection,
+            text_box::TextBox,
+        },
     },
 };
 use crossterm::event::KeyCode;
@@ -31,8 +35,14 @@ pub struct TracksView {
     achievements: HashMap<usize, Achievement>,
     account_achievements: HashMap<usize, AccountAchievement>,
     tracks: Vec<Track>,
-    add_textbox_content: String,
+    add_track_popup: AddTrackPopup,
     inserting: bool,
+}
+
+#[derive(Default)]
+struct AddTrackPopup {
+    content: String,
+    checkbox_state: CheckboxState,
 }
 
 impl TracksView {
@@ -45,8 +55,8 @@ impl TracksView {
             achievements: HashMap::default(),
             account_achievements: HashMap::default(),
             tracks: Vec::default(),
-            add_textbox_content: String::default(),
-            inserting: false,
+            add_track_popup: AddTrackPopup::default(),
+            inserting: true,
         }
     }
 
@@ -165,8 +175,8 @@ impl TracksView {
         );
     }
 
-    fn draw_popup<B: tui::backend::Backend>(&self, frame: &mut Frame<B>, area: Rect) {
-        let (width, height) = (30, 3);
+    fn draw_popup<B: tui::backend::Backend>(&mut self, frame: &mut Frame<B>, area: Rect) {
+        let (width, height) = (40, 4);
         if area.width < width || area.height < height {
             return;
         }
@@ -175,16 +185,30 @@ impl TracksView {
         let y = (area.height - height) / 2;
 
         let area = Rect::new(x, y, width, height);
-        let widget = TextBox::new(&self.add_textbox_content)
+        let v_chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Length(2), Constraint::Length(2)])
+            .split(area);
+
+        let input_box = TextBox::new(&self.add_track_popup.content)
             .style(Style::default().add_modifier(Modifier::REVERSED))
             .block(
                 Block::default()
-                    .borders(Borders::ALL)
+                    .borders(Borders::LEFT | Borders::RIGHT | Borders::TOP)
                     .title("Add custom item"),
             );
 
+        let check_box = Checkbox::new("Checkbox!")
+            .style(Style::default().add_modifier(Modifier::REVERSED))
+            .block(Block::default().borders(Borders::LEFT | Borders::RIGHT | Borders::BOTTOM));
+
         frame.render_widget(Clear, area);
-        frame.render_widget(widget, area)
+        frame.render_widget(input_box, v_chunks[0]);
+        frame.render_stateful_widget(
+            check_box,
+            v_chunks[1],
+            &mut self.add_track_popup.checkbox_state,
+        );
     }
 }
 
@@ -218,22 +242,22 @@ impl View for TracksView {
                         let _ =
                             self.tx_state
                                 .send(Event::State(StateEvent::AddTrack(Track::Custom(
-                                    self.add_textbox_content.clone(),
+                                    self.add_track_popup.content.clone(),
                                 ))));
-                        self.add_textbox_content.clear();
+                        self.add_track_popup.content.clear();
                         true
                     }
                     KeyCode::Esc => {
                         self.inserting = false;
-                        self.add_textbox_content.clear();
+                        self.add_track_popup.content.clear();
                         true
                     }
                     KeyCode::Char(letter) => {
-                        self.add_textbox_content.push(letter);
+                        self.add_track_popup.content.push(letter);
                         true
                     }
                     KeyCode::Backspace => {
-                        self.add_textbox_content.pop();
+                        self.add_track_popup.content.pop();
                         true
                     }
                     KeyCode::Left
