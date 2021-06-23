@@ -39,6 +39,7 @@ impl Input {
                 KeyCode::Esc => InputKind::Back,
                 KeyCode::Home => InputKind::Top,
                 KeyCode::End => InputKind::Bottom,
+                KeyCode::Enter => InputKind::Select,
                 KeyCode::Char('t') => InputKind::Track,
                 KeyCode::Char('a') => InputKind::Add,
                 KeyCode::Char('q') => InputKind::Quit,

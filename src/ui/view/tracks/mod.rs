@@ -1,27 +1,26 @@
-use std::{collections::HashMap, iter, rc::Rc};
+pub mod popup;
+
+use crate::ui::{
+    component::{
+        achievement_info::AchievementInfo, achievement_progress_info::AchievementProgressInfo,
+    },
+    view::tracks::popup::AddTrackPopup,
+};
+use std::{collections::HashMap, rc::Rc};
 
 use crate::{
     api::{AccountAchievement, Achievement},
     events::{CursorMovement, Event, InputEvent, InputKind, StateEvent, ViewEvent},
     state::AppState,
     tracks::Track,
-    ui::{
-        component::{
-            achievement_info::AchievementInfo, achievement_progress_info::AchievementProgressInfo,
-        },
-        widget::{
-            checkbox::{Checkbox, CheckboxState},
-            list_selection::ListSelection,
-            text_box::{Textbox, TextboxState},
-        },
-    },
+    ui::widget::list_selection::ListSelection,
 };
-use crossterm::event::KeyCode;
+
 use tokio::sync::mpsc::UnboundedSender;
+
 use tui::{
-    layout::{Constraint, Direction, Layout, Margin, Rect},
-    style::{Modifier, Style},
-    widgets::{Block, Borders, Clear, List, ListItem, ListState},
+    layout::{Constraint, Direction, Layout, Rect},
+    widgets::{Block, Borders, List, ListItem, ListState},
     Frame,
 };
 
@@ -37,13 +36,6 @@ pub struct TracksView {
     tracks: Vec<Track>,
     add_track_popup: AddTrackPopup,
     inserting: bool,
-}
-
-#[derive(Default)]
-struct AddTrackPopup {
-    textbox_state: TextboxState,
-    checkbox_state: CheckboxState,
-    list_state: ListState,
 }
 
 impl TracksView {
@@ -175,144 +167,6 @@ impl TracksView {
             area,
         );
     }
-
-    fn draw_popup<B: tui::backend::Backend>(&mut self, frame: &mut Frame<B>, area: Rect) {
-        let (width, height) = (50, 10);
-        if area.width < width || area.height < height {
-            return;
-        }
-
-        let x = (area.width - width) / 2;
-        let y = (area.height - height) / 2;
-
-        let style = Style::default().add_modifier(Modifier::REVERSED);
-        let area = Rect::new(x, y, width, height);
-        let background = Block::default()
-            .borders(Borders::ALL)
-            .title("Add custom item")
-            .style(style);
-        frame.render_widget(Clear, area);
-        frame.render_widget(background, area);
-
-        let area = area.inner(&Margin {
-            vertical: 2,
-            horizontal: 2,
-        });
-
-        let h_chunks = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints([Constraint::Length(2), Constraint::Length(area.width - 2)])
-            .split(area);
-
-        let v_chunks = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints([Constraint::Length(1), Constraint::Length(1)])
-            .split(h_chunks[1]);
-
-        let list = List::new(
-            iter::repeat(ListItem::new(" "))
-                .take(2)
-                .collect::<Vec<ListItem>>(),
-        )
-        .highlight_symbol(">")
-        .style(style);
-
-        let input_box =
-            Textbox::new().style(style.patch(Style::default().remove_modifier(Modifier::REVERSED)));
-
-        let check_box = Checkbox::new("Checkbox!").style(style);
-
-        frame.render_stateful_widget(list, h_chunks[0], &mut self.add_track_popup.list_state);
-        frame.render_stateful_widget(
-            input_box,
-            v_chunks[0],
-            &mut self.add_track_popup.textbox_state,
-        );
-        frame.render_stateful_widget(
-            check_box,
-            v_chunks[1],
-            &mut self.add_track_popup.checkbox_state,
-        );
-
-        if let Some(0) = self.add_track_popup.list_state.selected() {
-            let x = v_chunks[0].x + self.add_track_popup.textbox_state.cursor_position();
-            let y = v_chunks[0].y;
-            frame.set_cursor(x, y);
-        }
-    }
-
-    fn handle_input_popup(&mut self, event: &InputEvent) -> bool {
-        if let Some(key_code) = event.key_code {
-            match key_code {
-                KeyCode::Enter => {
-                    if !self.add_track_popup.textbox_state.content().is_empty() {
-                        self.inserting = false;
-                        let _ =
-                            self.tx_state
-                                .send(Event::State(StateEvent::AddTrack(Track::Custom(
-                                    self.add_track_popup.textbox_state.take(),
-                                ))));
-                        self.add_track_popup.textbox_state = TextboxState::default();
-                        return true;
-                    }
-                }
-                KeyCode::Esc => {
-                    self.inserting = false;
-                    self.add_track_popup.textbox_state = TextboxState::default();
-                    return true;
-                }
-                KeyCode::Up => {
-                    self.add_track_popup
-                        .list_state
-                        .move_cursor(2, CursorMovement::Up(1));
-                    return true;
-                }
-                KeyCode::Down => {
-                    self.add_track_popup
-                        .list_state
-                        .move_cursor(2, CursorMovement::Down(1));
-                    return true;
-                }
-                _ => {}
-            }
-            if let Some(selected_i) = self.add_track_popup.list_state.selected() {
-                match selected_i {
-                    // Textbox selected
-                    0 => match key_code {
-                        KeyCode::Char(letter) => {
-                            self.add_track_popup.textbox_state.insert_character(letter);
-                            return true;
-                        }
-                        KeyCode::Backspace => {
-                            self.add_track_popup.textbox_state.remove_character();
-                            return true;
-                        }
-                        KeyCode::Left => {
-                            self.add_track_popup
-                                .textbox_state
-                                .move_cursor(CursorMovement::Left(1));
-                        }
-                        KeyCode::Right => {
-                            self.add_track_popup
-                                .textbox_state
-                                .move_cursor(CursorMovement::Right(1));
-                        }
-                        _ => {}
-                    },
-                    // Checkbox selected
-                    1 => match key_code {
-                        KeyCode::Char(' ') => {
-                            self.add_track_popup.checkbox_state.toggle();
-                            return true;
-                        }
-                        _ => {}
-                    },
-                    _ => {}
-                }
-            }
-        }
-        false
-    }
 }
 
 impl View for TracksView {
@@ -332,14 +186,12 @@ impl View for TracksView {
         }
 
         if self.inserting {
-            self.draw_popup(frame, area);
+            self.add_track_popup.draw(frame, area);
         }
     }
 
     fn handle_input_event(&mut self, event: &InputEvent) -> bool {
-        if self.inserting {
-            self.handle_input_popup(event)
-        } else {
+        if !self.inserting || !self.add_track_popup.handle_input(event) {
             match event.input {
                 InputKind::MoveUp(amount) => {
                     self.list_state.move_cursor(
@@ -365,11 +217,29 @@ impl View for TracksView {
                 }
                 InputKind::Add => {
                     self.inserting = true;
-                    self.add_track_popup.list_state.select(Some(0));
+                    true
+                }
+                InputKind::Back => {
+                    if self.inserting {
+                        self.inserting = false;
+                        self.add_track_popup.cancel();
+                    }
+                    true
+                }
+                InputKind::Select => {
+                    if self.inserting {
+                        self.inserting = false;
+                        let track = self.add_track_popup.finish();
+                        let _ = self
+                            .tx_state
+                            .send(Event::State(StateEvent::AddTrack(track)));
+                    }
                     true
                 }
                 _ => false,
             }
+        } else {
+            false
         }
     }
 

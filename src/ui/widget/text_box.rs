@@ -1,7 +1,4 @@
-use std::{
-    cmp::{max, min},
-    mem,
-};
+use std::{cmp::min, mem};
 
 use tui::{
     buffer::Buffer,

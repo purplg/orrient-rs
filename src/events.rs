@@ -43,6 +43,7 @@ pub enum InputKind {
     MoveDown(usize),
     Top,
     Bottom,
+    Select,
     Back,
     Quit,
     Track,
