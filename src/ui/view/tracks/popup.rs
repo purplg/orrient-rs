@@ -9,11 +9,11 @@ use tui::{
 };
 
 use crate::{
-    events::{CursorMovement, InputEvent},
+    events::{InputEvent, InputKind},
     tracks::Track,
     ui::widget::{
         checkbox::{Checkbox, CheckboxState},
-        list_selection::ListSelection,
+        list_selection::{CursorMovement, ListSelection},
         text_box::{Textbox, TextboxState},
     },
 };
@@ -108,50 +108,58 @@ impl AddTrackPopup {
     }
 
     pub fn handle_input(&mut self, event: &InputEvent) -> bool {
-        if let Some(key_code) = event.key_code {
-            match key_code {
-                KeyCode::Up => {
-                    self.list_state.move_cursor(2, CursorMovement::Up(1));
-                    return true;
+        if let Some(selected_i) = self.list_state.selected() {
+            match selected_i {
+                // Textbox selected
+                0 => {
+                    if let Some(key_code) = event.key_code {
+                        match key_code {
+                            KeyCode::Char(letter) => {
+                                self.textbox_state.insert_character(letter);
+                                return true;
+                            }
+                            KeyCode::Backspace => {
+                                self.textbox_state.remove_character();
+                                return true;
+                            }
+                            _ => {}
+                        }
+                    }
                 }
-                KeyCode::Down => {
-                    self.list_state.move_cursor(2, CursorMovement::Down(1));
-                    return true;
-                }
+
+                // Checkbox selected
+                1 => match event.input {
+                    InputKind::Select => {
+                        self.checkbox_state.toggle();
+                        return true;
+                    }
+                    _ => {}
+                },
                 _ => {}
             }
-            if let Some(selected_i) = self.list_state.selected() {
-                match selected_i {
-                    // Textbox selected
-                    0 => match key_code {
-                        KeyCode::Char(letter) => {
-                            self.textbox_state.insert_character(letter);
-                            return true;
-                        }
-                        KeyCode::Backspace => {
-                            self.textbox_state.remove_character();
-                            return true;
-                        }
-                        KeyCode::Left => {
-                            self.textbox_state.move_cursor(CursorMovement::Left(1));
-                        }
-                        KeyCode::Right => {
-                            self.textbox_state.move_cursor(CursorMovement::Right(1));
-                        }
-                        _ => {}
-                    },
-                    // Checkbox selected
-                    1 => match key_code {
-                        KeyCode::Char(' ') => {
-                            self.checkbox_state.toggle();
-                            return true;
-                        }
-                        _ => {}
-                    },
-                    _ => {}
-                }
-            }
         }
+
+        match event.input {
+            InputKind::MoveUp(amount) => {
+                self.list_state.move_cursor(2, CursorMovement::Up(amount));
+                return true;
+            }
+            InputKind::MoveDown(amount) => {
+                self.list_state.move_cursor(2, CursorMovement::Down(amount));
+                return true;
+            }
+            InputKind::MoveLeft(amount) => {
+                self.textbox_state.move_cursor(CursorMovement::Left(amount));
+                return true;
+            }
+            InputKind::MoveRight(amount) => {
+                self.textbox_state
+                    .move_cursor(CursorMovement::Right(amount));
+                return true;
+            }
+            _ => {}
+        }
+
         false
     }
 }

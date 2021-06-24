@@ -1,4 +1,7 @@
-use crate::ui::widget::text_box::{Textbox, TextboxState};
+use crate::ui::widget::{
+    list_selection::CursorMovement,
+    text_box::{Textbox, TextboxState},
+};
 use std::{
     collections::{BTreeMap, HashMap},
     rc::Rc,
@@ -16,7 +19,7 @@ use tui::{
 
 use crate::{
     api::{AccountAchievement, Achievement},
-    events::{CursorMovement, Event, InputEvent, InputKind, StateEvent, ViewEvent},
+    events::{Event, InputEvent, InputKind, StateEvent, ViewEvent},
     state::AppState,
     tracks::Track,
     ui::{component::achievement_info::AchievementInfo, widget::list_selection::ListSelection},
@@ -119,7 +122,7 @@ impl AchievementsView {
             .collect::<Vec<usize>>();
 
         // HACK Since the ListState offset can cause an 'index out of bounds' panic, we have to select nothing to reset the ListState and then re-apply cursor position
-        let before_pos = self.list_state.selected().unwrap_or(0);
+        let before_pos = self.list_state.selected().unwrap_or(0) as u16;
         self.list_state.select(None);
         self.list_state.move_cursor(
             self.visible_list_ids.len(),
@@ -212,69 +215,66 @@ impl View for AchievementsView {
 
     fn handle_input_event(&mut self, event: &InputEvent) -> bool {
         if self.searching {
+            match event.input {
+                InputKind::Select => {
+                    self.searching = false;
+                    return true;
+                }
+                InputKind::Back => {
+                    self.textbox_state.clear();
+                    self.update_filter();
+                    self.searching = false;
+                    return true;
+                }
+                _ => {}
+            }
+
             if let Some(key_code) = event.key_code {
                 match key_code {
-                    KeyCode::Enter => {
-                        self.searching = false;
-                        true
-                    }
-                    KeyCode::Esc => {
-                        self.textbox_state.clear();
-                        self.update_filter();
-                        self.searching = false;
-                        true
-                    }
                     KeyCode::Char(letter) => {
                         self.textbox_state.insert_character(letter);
                         self.update_filter();
-                        true
+                        return true;
                     }
                     KeyCode::Backspace => {
                         self.textbox_state.remove_character();
                         self.update_filter();
-                        true
+                        return true;
                     }
-                    KeyCode::Left
-                    | KeyCode::Right
-                    | KeyCode::Home
-                    | KeyCode::End
-                    | KeyCode::Delete => false,
-                    _ => false,
+                    _ => {}
                 }
-            } else {
-                false
             }
         } else {
             match event.input {
                 InputKind::MoveUp(amount) => {
                     self.list_state
                         .move_cursor(self.visible_list_ids.len(), CursorMovement::Up(amount));
-                    true
+                    return true;
                 }
                 InputKind::MoveDown(amount) => {
                     self.list_state
                         .move_cursor(self.visible_list_ids.len(), CursorMovement::Down(amount));
-                    true
+                    return true;
                 }
                 InputKind::Search => {
                     self.searching = !self.searching;
-                    true
+                    return true;
                 }
                 InputKind::Top => {
                     if self.visible_list_ids.is_empty() {
                         self.list_state.select(Some(0));
                     }
-                    true
+                    return true;
                 }
                 InputKind::Bottom => {
                     self.list_state
                         .select(Some(self.visible_list_ids.len() - 1));
-                    true
+                    return true;
                 }
                 InputKind::Back => {
                     self.textbox_state.clear();
                     self.update_filter();
-                    true
+                    return true;
                 }
                 InputKind::Track => {
                     self.selected_id().map(|id| {
@@ -284,11 +284,12 @@ impl View for AchievementsView {
                             )))
                         })
                     });
-                    true
+                    return true;
                 }
-                _ => false,
+                _ => {}
             }
         }
+        false
     }
 
     fn handle_view_event(&mut self, event: &ViewEvent) {

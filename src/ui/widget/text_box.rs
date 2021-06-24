@@ -7,7 +7,7 @@ use tui::{
     widgets::{Block, StatefulWidget, Widget},
 };
 
-use crate::events::CursorMovement;
+use super::list_selection::CursorMovement;
 
 pub struct Textbox<'a> {
     style: Style,
@@ -38,7 +38,7 @@ impl<'a> StatefulWidget for Textbox<'a> {
 
     fn render(mut self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
         buf.set_style(area, self.style);
-        let text_box_area = match self.block.take() {
+        let area = match self.block.take() {
             Some(block) => {
                 let inner_area = block.inner(area);
                 block.render(area, buf);
@@ -47,15 +47,15 @@ impl<'a> StatefulWidget for Textbox<'a> {
             None => area,
         };
 
-        if text_box_area.width < 1 || text_box_area.height < 1 {
+        if area.width < 1 || area.height < 1 {
             return;
         }
 
         buf.set_stringn(
-            text_box_area.x,
-            text_box_area.y,
+            area.x,
+            area.y,
             state.content(),
-            text_box_area.width as usize,
+            area.width as usize,
             self.style,
         );
     }

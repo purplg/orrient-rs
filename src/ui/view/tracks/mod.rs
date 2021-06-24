@@ -5,12 +5,13 @@ use crate::ui::{
         achievement_info::AchievementInfo, achievement_progress_info::AchievementProgressInfo,
     },
     view::tracks::popup::AddTrackPopup,
+    widget::list_selection::CursorMovement,
 };
 use std::{collections::HashMap, rc::Rc};
 
 use crate::{
     api::{AccountAchievement, Achievement},
-    events::{CursorMovement, Event, InputEvent, InputKind, StateEvent, ViewEvent},
+    events::{Event, InputEvent, InputKind, StateEvent, ViewEvent},
     state::AppState,
     tracks::Track,
     ui::widget::list_selection::ListSelection,
@@ -215,7 +216,7 @@ impl View for TracksView {
                     }
                     true
                 }
-                InputKind::Add => {
+                InputKind::New => {
                     self.inserting = true;
                     true
                 }

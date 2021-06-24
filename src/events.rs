@@ -39,15 +39,17 @@ pub struct InputEvent {
 
 #[derive(Debug)]
 pub enum InputKind {
-    MoveUp(usize),
-    MoveDown(usize),
+    MoveLeft(u16),
+    MoveRight(u16),
+    MoveUp(u16),
+    MoveDown(u16),
     Top,
     Bottom,
     Select,
     Back,
     Quit,
     Track,
-    Add,
+    New,
     Search,
     SwitchTab(usize),
     Unhandled,
@@ -61,15 +63,6 @@ pub enum ViewEvent {
     UpdateDailies,
     UpdateStatus(String),
     Quit,
-}
-
-#[derive(Debug)]
-pub enum CursorMovement {
-    Left(usize),
-    Right(usize),
-    Up(usize),
-    Down(usize),
-    None,
 }
 
 pub struct EventLoop {

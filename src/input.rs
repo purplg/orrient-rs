@@ -32,6 +32,8 @@ impl Input {
     fn handle(&self, event: CrosstermEvent) -> InputEvent {
         if let CrosstermEvent::Key(keyevent) = event {
             let input_kind = match keyevent.code {
+                KeyCode::Left | KeyCode::Char('h') | KeyCode::Char('a') => InputKind::MoveLeft(1),
+                KeyCode::Right | KeyCode::Char('l') | KeyCode::Char('d') => InputKind::MoveRight(1),
                 KeyCode::Up | KeyCode::Char('k') | KeyCode::Char('w') => InputKind::MoveUp(1),
                 KeyCode::Down | KeyCode::Char('j') | KeyCode::Char('s') => InputKind::MoveDown(1),
                 KeyCode::PageUp => InputKind::MoveUp(100),
@@ -41,7 +43,7 @@ impl Input {
                 KeyCode::End => InputKind::Bottom,
                 KeyCode::Enter => InputKind::Select,
                 KeyCode::Char('t') => InputKind::Track,
-                KeyCode::Char('a') => InputKind::Add,
+                KeyCode::Char('n') => InputKind::New,
                 KeyCode::Char('q') => InputKind::Quit,
                 KeyCode::Char('/') => InputKind::Search,
                 KeyCode::Char('1') => InputKind::SwitchTab(0),
