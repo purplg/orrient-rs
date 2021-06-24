@@ -49,7 +49,6 @@ pub enum InputKind {
     Select,
     Back,
     Quit,
-    Track,
     New,
     Search,
     SwitchTab(usize),

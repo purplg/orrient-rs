@@ -43,7 +43,6 @@ impl Input {
                 KeyCode::End => InputKind::Bottom,
                 KeyCode::Enter => InputKind::Confirm,
                 KeyCode::Char(' ') => InputKind::Select,
-                KeyCode::Char('t') => InputKind::Track,
                 KeyCode::Char('n') => InputKind::New,
                 KeyCode::Char('q') => InputKind::Quit,
                 KeyCode::Char('/') => InputKind::Search,

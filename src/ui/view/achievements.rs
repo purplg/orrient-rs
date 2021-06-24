@@ -276,7 +276,7 @@ impl View for AchievementsView {
                     self.update_filter();
                     return true;
                 }
-                InputKind::Track => {
+                InputKind::Select => {
                     self.selected_id().map(|id| {
                         self.achievements.get(&id).map(|achievement| {
                             self.tx_state.send(Event::State(StateEvent::ToggleTrack(

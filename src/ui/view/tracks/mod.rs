@@ -208,7 +208,7 @@ impl View for TracksView {
                     );
                     true
                 }
-                InputKind::Track => {
+                InputKind::Select => {
                     if let Some(track) = self.selected_track() {
                         let _ = self
                             .tx_state
