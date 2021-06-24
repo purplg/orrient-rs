@@ -74,23 +74,28 @@ pub struct TextboxState {
 }
 
 impl TextboxState {
+    /// Clears the content of the textbox
     pub fn clear(&mut self) {
         self.content.clear();
     }
 
+    /// Get a reference to the content
     pub fn content(&self) -> &String {
         &self.content
     }
 
+    /// Get the current position of the cursor
     pub fn cursor_position(&self) -> u16 {
         self.cursor_position
     }
 
+    /// Insert a character at the current position
     pub fn insert_character(&mut self, c: char) {
         self.content.insert(self.cursor_position() as usize, c);
         self.cursor_position += 1;
     }
 
+    /// Remove the character at the current position
     pub fn remove_character(&mut self) {
         if self.cursor_position() > 0 {
             self.content.remove(self.cursor_position() as usize - 1);
@@ -113,6 +118,10 @@ impl TextboxState {
         }
     }
 
+    /// 'Take' and return the content of the textbox leaving it empty
+    ///
+    /// Useful when you're completing a form and getting the contents without requiring unnecessary
+    /// allocations    pub fn take(&mut self) -> String {
     pub fn take(&mut self) -> String {
         mem::take(&mut self.content)
     }
