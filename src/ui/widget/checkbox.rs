@@ -49,10 +49,6 @@ pub struct CheckboxState {
 }
 
 impl CheckboxState {
-    pub fn new() -> Self {
-        Self { checked: false }
-    }
-
     pub fn checked(&self) -> bool {
         self.checked
     }
