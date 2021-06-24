@@ -18,13 +18,13 @@ use crate::{
     },
 };
 
-pub struct AddTrackPopup {
+pub struct CustomTrackPopupState {
     textbox_state: TextboxState,
     checkbox_state: CheckboxState,
     list_state: ListState,
 }
 
-impl Default for AddTrackPopup {
+impl Default for CustomTrackPopupState {
     fn default() -> Self {
         let mut popup = Self {
             textbox_state: TextboxState::default(),
@@ -36,7 +36,7 @@ impl Default for AddTrackPopup {
     }
 }
 
-impl AddTrackPopup {
+impl CustomTrackPopupState {
     pub fn cancel(&mut self) {
         self.textbox_state = TextboxState::default();
         self.checkbox_state = CheckboxState::default();

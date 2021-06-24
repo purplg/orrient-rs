@@ -4,7 +4,7 @@ use crate::ui::{
     component::{
         achievement_info::AchievementInfo, achievement_progress_info::AchievementProgressInfo,
     },
-    view::tracks::popup::AddTrackPopup,
+    view::tracks::popup::CustomTrackPopupState,
     widget::list_selection::CursorMovement,
 };
 use std::{collections::HashMap, rc::Rc};
@@ -35,7 +35,7 @@ pub struct TracksView {
     achievements: HashMap<usize, Achievement>,
     account_achievements: HashMap<usize, AccountAchievement>,
     tracks: Vec<Track>,
-    add_track_popup: AddTrackPopup,
+    add_track_popup: CustomTrackPopupState,
     inserting: bool,
 }
 
@@ -49,7 +49,7 @@ impl TracksView {
             achievements: HashMap::default(),
             account_achievements: HashMap::default(),
             tracks: Vec::default(),
-            add_track_popup: AddTrackPopup::default(),
+            add_track_popup: CustomTrackPopupState::default(),
             inserting: false,
         }
     }
