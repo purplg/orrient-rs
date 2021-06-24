@@ -45,6 +45,7 @@ pub enum InputKind {
     MoveDown(u16),
     Top,
     Bottom,
+    Confirm,
     Select,
     Back,
     Quit,

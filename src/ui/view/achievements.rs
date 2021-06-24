@@ -216,7 +216,7 @@ impl View for AchievementsView {
     fn handle_input_event(&mut self, event: &InputEvent) -> bool {
         if self.searching {
             match event.input {
-                InputKind::Select => {
+                InputKind::Confirm => {
                     self.searching = false;
                     return true;
                 }

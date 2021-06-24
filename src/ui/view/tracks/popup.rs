@@ -108,46 +108,32 @@ impl AddTrackPopup {
     }
 
     pub fn handle_input(&mut self, event: &InputEvent) -> bool {
-        if let Some(selected_i) = self.list_state.selected() {
-            match selected_i {
-                // Textbox selected
-                0 => {
-                    if let Some(key_code) = event.key_code {
-                        match key_code {
-                            KeyCode::Char(letter) => {
-                                self.textbox_state.insert_character(letter);
-                                return true;
-                            }
-                            KeyCode::Backspace => {
-                                self.textbox_state.remove_character();
-                                return true;
-                            }
-                            _ => {}
-                        }
-                    }
-                }
+        if match self.list_state.selected() {
+            Some(0) => self.handle_input_textbox(event),
+            Some(1) => self.handle_input_checkbox(event),
+            _ => false,
+        } {
+            return true;
+        }
+        self.handle_input_cursor(event)
+    }
 
-                // Checkbox selected
-                1 => match event.input {
-                    InputKind::Select => {
-                        self.checkbox_state.toggle();
-                        return true;
-                    }
-                    _ => {}
-                },
+    fn handle_input_textbox(&mut self, event: &InputEvent) -> bool {
+        if let Some(key_code) = event.key_code {
+            match key_code {
+                KeyCode::Char(letter) => {
+                    self.textbox_state.insert_character(letter);
+                    return true;
+                }
+                KeyCode::Backspace => {
+                    self.textbox_state.remove_character();
+                    return true;
+                }
                 _ => {}
             }
         }
 
         match event.input {
-            InputKind::MoveUp(amount) => {
-                self.list_state.move_cursor(2, CursorMovement::Up(amount));
-                return true;
-            }
-            InputKind::MoveDown(amount) => {
-                self.list_state.move_cursor(2, CursorMovement::Down(amount));
-                return true;
-            }
             InputKind::MoveLeft(amount) => {
                 self.textbox_state.move_cursor(CursorMovement::Left(amount));
                 return true;
@@ -159,7 +145,30 @@ impl AddTrackPopup {
             }
             _ => {}
         }
-
         false
+    }
+
+    fn handle_input_checkbox(&mut self, event: &InputEvent) -> bool {
+        match event.input {
+            InputKind::Select => {
+                self.checkbox_state.toggle();
+                true
+            }
+            _ => false,
+        }
+    }
+
+    fn handle_input_cursor(&mut self, event: &InputEvent) -> bool {
+        match event.input {
+            InputKind::MoveUp(amount) => {
+                self.list_state.move_cursor(2, CursorMovement::Up(amount));
+                true
+            }
+            InputKind::MoveDown(amount) => {
+                self.list_state.move_cursor(2, CursorMovement::Down(amount));
+                true
+            }
+            _ => false,
+        }
     }
 }

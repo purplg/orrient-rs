@@ -227,7 +227,7 @@ impl View for TracksView {
                     }
                     true
                 }
-                InputKind::Select => {
+                InputKind::Confirm => {
                     if self.inserting {
                         self.inserting = false;
                         let track = self.add_track_popup.finish();
