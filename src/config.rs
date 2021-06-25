@@ -1,10 +1,12 @@
 use std::fs;
 use std::io;
+use std::io::Write;
 use std::path::Path;
 
 use crate::cli::Options;
 
 use chrono::Duration;
+use log::debug;
 use serde::Deserialize;
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -13,12 +15,15 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
     Io(io::Error),
     InvalidYaml(serde_yaml::Error),
+    MissingConfig,
+    MissingApiKey,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct Config {
+    #[serde(default = "default_gateway")]
     pub gateway: String,
-    pub apikey: Option<String>,
+    pub apikey: String,
     #[serde(default)]
     pub offline: bool,
     #[serde(default)]
@@ -35,12 +40,17 @@ pub struct Config {
 
 impl Config {
     pub fn load(options: Options) -> Result<Config> {
-        let mut config =
-            open_config(&options.config_path).and_then(|config| parse_config(&config))?;
-
-        config.options_override(options);
-
-        Ok(config)
+        if let Some(ref config_path) = options.config_path {
+            let mut config = open_config(&config_path).and_then(|config| parse_config(&config))?;
+            config.options_override(options);
+            if config.apikey.eq("~") {
+                Err(Error::MissingApiKey)
+            } else {
+                Ok(config)
+            }
+        } else {
+            Err(Error::MissingConfig)
+        }
     }
 
     fn options_override(&mut self, options: Options) {
@@ -56,8 +66,8 @@ impl Config {
             self.cache_age = cache_age;
         }
 
-        if options.apikey.is_some() {
-            self.apikey = options.apikey;
+        if let Some(apikey) = options.apikey {
+            self.apikey = apikey;
         }
 
         if options.offline {
@@ -79,9 +89,20 @@ impl Config {
 }
 
 fn open_config(path: &Path) -> Result<String> {
-    match fs::read_to_string(path) {
-        Ok(config) => Ok(config),
-        Err(e) => Err(Error::Io(e)),
+    if let Ok(config) = fs::read_to_string(path) {
+        Ok(config)
+    } else {
+        if let Some(config_directory) = path.parent() {
+            fs::create_dir_all(config_directory).map_err(Error::Io)?;
+        }
+        if let Ok(_) = fs::File::create(path)
+            .map_err(Error::Io)?
+            .write_all(CONFIG_TXT.as_bytes())
+        {
+            Ok(CONFIG_TXT.to_string())
+        } else {
+            Err(Error::MissingConfig)
+        }
     }
 }
 
@@ -90,6 +111,10 @@ fn parse_config(config: &'_ str) -> Result<Config> {
         Ok(config) => Ok(config),
         Err(error) => Err(Error::InvalidYaml(error)),
     }
+}
+
+fn default_gateway() -> String {
+    String::from("https://api.guildwars2.com")
 }
 
 fn default_cache_path() -> String {
@@ -190,3 +215,27 @@ mod duration_seconds {
         d.deserialize_i64(SecondsDurationVisitor)
     }
 }
+
+pub const CONFIG_TXT: &str = r##"# Required. Generate and place an api key here from https://account.arena.net/applications
+apikey:
+#
+# Change the gateway to retreive account data from. Dunno why you'd ever want this.
+# gateway: https://api.guildwars2.com
+#
+# Do not make any api calls. Currently doesn't do anything
+# offline: false
+#
+# Change the location of the cache file
+# cache_path: /tmp/orrient.cache.json
+#
+# How long (in seconds) should long-term requests be cached. This affects global data not account data
+# cache_age: 86400 # 24 hours
+#
+# Whether to compress the cache file
+# cache_compression: false
+#
+# Print more information to the log
+# verbose: true
+#
+# Which tab to open when the application is started
+# starting_tab: 4"##;

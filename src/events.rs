@@ -113,9 +113,7 @@ impl EventLoop {
                 }
                 StateEvent::AddTrack(track) => {
                     self.app_state.add_track(track);
-                    let tracks = self
-                        .app_state
-                        .tracked_items();
+                    let tracks = self.app_state.tracked_items();
                     if let Err(err) = self.tracks_writer.write(tracks) {
                         error!("Error writing tracks: {}", err);
                     }
@@ -123,9 +121,7 @@ impl EventLoop {
                 }
                 StateEvent::ToggleTrack(track) => {
                     self.app_state.toggle_track(track);
-                    let tracks = self
-                        .app_state
-                        .tracked_items();
+                    let tracks = self.app_state.tracked_items();
                     if let Err(err) = self.tracks_writer.write(tracks) {
                         error!("Error writing tracks: {}", err);
                     }

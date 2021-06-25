@@ -21,17 +21,7 @@ use signal_hook_tokio::Signals;
 use state::AppState;
 use tokio::{select, sync::mpsc};
 
-use crate::{
-    cli::Options,
-    client::CachedClient,
-    config::Config,
-    events::{Event, EventLoop, StateEvent},
-    fetch::Fetch,
-    log::setup_logger,
-    signals::handle_signals,
-    tracks::{Reader, Track},
-    ui::UI,
-};
+use crate::{cli::{Options, config_path}, client::CachedClient, config::Config, events::{Event, EventLoop, StateEvent}, fetch::Fetch, log::setup_logger, signals::handle_signals, tracks::{Reader, Track}, ui::UI};
 
 #[macro_use]
 extern crate serde_derive;
@@ -52,7 +42,15 @@ pub enum Error {
 #[tokio::main]
 pub async fn main() -> Result {
     let options = Options::new();
-    let config: Config = Config::load(options).map_err(Error::Config)?;
+    let config = Config::load(options).map_err(Error::Config);
+    if let Err(Error::Config(config::Error::MissingApiKey)) = config {
+        print!("You must provide an API key in the config file");
+        if let Some(config_path) = config_path() {
+            print!(": {}", config_path.to_string_lossy());
+        }
+        println!();
+    }
+    let config = config?;
 
     setup_logger(&config).map_err(Error::Logger)?;
     debug!("{:?}", config);

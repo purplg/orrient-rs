@@ -96,7 +96,7 @@ impl CachedClient {
 pub struct GW2Client {
     client: reqwest::Client,
     gateway: String,
-    apikey: Option<String>,
+    apikey: String,
 }
 
 impl GW2Client {
@@ -162,14 +162,10 @@ impl GW2Client {
 
         // Place the API key in the headers only if it is necessary
         if E::AUTHENTICATED {
-            if let Some(apikey) = &self.apikey {
-                headermap.insert(
-                    "Authorization",
-                    format!("Bearer {}", apikey).parse().unwrap(),
-                );
-            } else {
-                return Err(Error::MissingApiKey);
-            }
+            headermap.insert(
+                "Authorization",
+                format!("Bearer {}", self.apikey).parse().unwrap(),
+            );
         }
 
         Ok(headermap)

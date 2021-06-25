@@ -6,7 +6,7 @@ use clap::{App, Arg};
 /// Contains all the possible arguments passed from the command line.
 #[derive(Debug)]
 pub struct Options {
-    pub config_path: PathBuf,
+    pub config_path: Option<PathBuf>,
     pub gateway: Option<String>,
     pub apikey: Option<String>,
     pub offline: bool,
@@ -20,7 +20,7 @@ pub struct Options {
 impl Default for Options {
     fn default() -> Self {
         Options {
-            config_path: PathBuf::from("config.yaml"),
+            config_path: None,
             gateway: None,
             apikey: None,
             offline: false,
@@ -98,7 +98,9 @@ impl Options {
         let mut options = Options::default();
 
         if let Some(config_path) = matches.value_of("config") {
-            options.config_path = PathBuf::from(config_path.to_string());
+            options.config_path = Some(PathBuf::from(config_path.to_string()));
+        } else {
+            options.config_path = config_path();
         }
 
         if let Some(cache_path) = matches.value_of("cache-file") {
@@ -122,5 +124,14 @@ impl Options {
             .flatten();
 
         options
+    }
+}
+
+pub fn config_path() -> Option<PathBuf> {
+    if let Some(mut config_dir) = dirs::config_dir() {
+        config_dir.push("orrient/config.yaml");
+        Some(config_dir)
+    } else {
+        None
     }
 }
