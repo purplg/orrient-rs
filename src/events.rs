@@ -1,6 +1,5 @@
 use std::rc::Rc;
 
-use crossterm::event::KeyCode;
 use log::error;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
@@ -30,29 +29,6 @@ pub enum StateEvent {
     },
     AchievementsLoaded,
     FetchedDailies(Dailies),
-}
-
-pub struct InputEvent {
-    pub input: InputKind,
-    pub key_code: Option<KeyCode>,
-}
-
-#[derive(Debug)]
-pub enum InputKind {
-    MoveLeft(u16),
-    MoveRight(u16),
-    MoveUp(u16),
-    MoveDown(u16),
-    Top,
-    Bottom,
-    Confirm,
-    Select,
-    Back,
-    Quit,
-    New,
-    Search,
-    SwitchTab(usize),
-    Unhandled,
 }
 
 #[derive(Debug)]

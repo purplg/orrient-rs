@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use crate::events::{InputEvent, ViewEvent};
+use crate::{events::ViewEvent, input::InputEvent};
 use futures::FutureExt;
 use tokio::{sync::mpsc::UnboundedSender, task::JoinHandle};
 use tui::{

@@ -11,7 +11,8 @@ use tui::{
 
 use crate::{
     api::{Achievement, Dailies, Daily},
-    events::{InputEvent, ViewEvent},
+    events::ViewEvent,
+    input::InputEvent,
     state::AppState,
 };
 

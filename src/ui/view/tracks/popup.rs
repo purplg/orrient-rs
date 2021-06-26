@@ -9,7 +9,7 @@ use tui::{
 };
 
 use crate::{
-    events::{InputEvent, InputKind},
+    input::{InputEvent, InputKind},
     tracks::Track,
     ui::widget::{
         checkbox::{Checkbox, CheckboxState},

@@ -1,6 +1,9 @@
-use crate::ui::widget::{
-    list_selection::CursorMovement,
-    text_box::{Textbox, TextboxState},
+use crate::{
+    input::{InputEvent, InputKind},
+    ui::widget::{
+        list_selection::CursorMovement,
+        text_box::{Textbox, TextboxState},
+    },
 };
 use std::{
     collections::{BTreeMap, HashMap},
@@ -19,7 +22,7 @@ use tui::{
 
 use crate::{
     api::{AccountAchievement, Achievement},
-    events::{Event, InputEvent, InputKind, StateEvent, ViewEvent},
+    events::{Event, StateEvent, ViewEvent},
     state::AppState,
     tracks::Track,
     ui::{component::achievement_info::AchievementInfo, widget::list_selection::ListSelection},

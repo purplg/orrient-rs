@@ -13,7 +13,7 @@ use tui::{
     Frame,
 };
 
-use crate::events::{InputEvent, ViewEvent};
+use crate::{events::ViewEvent, input::InputEvent};
 
 use super::View;
 

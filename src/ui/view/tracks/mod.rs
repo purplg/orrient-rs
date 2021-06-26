@@ -1,17 +1,20 @@
 pub mod popup;
 
-use crate::ui::{
-    component::{
-        achievement_info::AchievementInfo, achievement_progress_info::AchievementProgressInfo,
+use crate::{
+    input::{InputEvent, InputKind},
+    ui::{
+        component::{
+            achievement_info::AchievementInfo, achievement_progress_info::AchievementProgressInfo,
+        },
+        view::tracks::popup::CustomTrackPopupState,
+        widget::list_selection::CursorMovement,
     },
-    view::tracks::popup::CustomTrackPopupState,
-    widget::list_selection::CursorMovement,
 };
 use std::{collections::HashMap, rc::Rc};
 
 use crate::{
     api::{AccountAchievement, Achievement},
-    events::{Event, InputEvent, InputKind, StateEvent, ViewEvent},
+    events::{Event, StateEvent, ViewEvent},
     state::AppState,
     tracks::Track,
     ui::widget::list_selection::ListSelection,

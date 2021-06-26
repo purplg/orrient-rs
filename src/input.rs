@@ -5,7 +5,28 @@ use crossterm::event::{EventStream, KeyCode};
 use futures::{FutureExt, StreamExt};
 use tokio::{select, sync::mpsc::UnboundedSender};
 
-use crate::events::{InputEvent, InputKind};
+#[derive(Debug)]
+pub enum InputKind {
+    MoveLeft(u16),
+    MoveRight(u16),
+    MoveUp(u16),
+    MoveDown(u16),
+    Top,
+    Bottom,
+    Confirm,
+    Select,
+    Back,
+    Quit,
+    New,
+    Search,
+    SwitchTab(usize),
+    Unhandled,
+}
+
+pub struct InputEvent {
+    pub input: InputKind,
+    pub key_code: Option<KeyCode>,
+}
 
 pub struct Input {
     tx_input: UnboundedSender<InputEvent>,
