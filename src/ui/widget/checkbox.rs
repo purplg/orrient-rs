@@ -11,6 +11,7 @@ pub struct Checkbox<'a> {
     checked_symbol: Option<&'a str>,
 }
 
+#[allow(dead_code)]
 impl<'a> Checkbox<'a> {
     pub fn new(content: &'a str) -> Self {
         Self {
