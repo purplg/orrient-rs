@@ -6,7 +6,6 @@ use std::path::Path;
 use crate::cli::Options;
 
 use chrono::Duration;
-use log::debug;
 use serde::Deserialize;
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -41,7 +40,8 @@ pub struct Config {
 impl Config {
     pub fn load(options: Options) -> Result<Config> {
         if let Some(ref config_path) = options.config_path {
-            let mut config = open_config(&config_path).and_then(|config| parse_config(&config))?;
+            let mut config =
+                Self::open_config(&config_path).and_then(|config| Self::parse_config(&config))?;
             config.options_override(options);
             if config.apikey.eq("~") {
                 Err(Error::MissingApiKey)
@@ -86,30 +86,30 @@ impl Config {
             self.starting_tab = starting_tab;
         }
     }
-}
 
-fn open_config(path: &Path) -> Result<String> {
-    if let Ok(config) = fs::read_to_string(path) {
-        Ok(config)
-    } else {
-        if let Some(config_directory) = path.parent() {
-            fs::create_dir_all(config_directory).map_err(Error::Io)?;
-        }
-        if let Ok(_) = fs::File::create(path)
-            .map_err(Error::Io)?
-            .write_all(CONFIG_TXT.as_bytes())
-        {
-            Ok(CONFIG_TXT.to_string())
+    fn open_config(path: &Path) -> Result<String> {
+        if let Ok(config) = fs::read_to_string(path) {
+            Ok(config)
         } else {
-            Err(Error::MissingConfig)
+            if let Some(config_directory) = path.parent() {
+                fs::create_dir_all(config_directory).map_err(Error::Io)?;
+            }
+            if let Ok(_) = fs::File::create(path)
+                .map_err(Error::Io)?
+                .write_all(CONFIG_TXT.as_bytes())
+            {
+                Ok(CONFIG_TXT.to_string())
+            } else {
+                Err(Error::MissingConfig)
+            }
         }
     }
-}
 
-fn parse_config(config: &'_ str) -> Result<Config> {
-    match serde_yaml::from_str(config) {
-        Ok(config) => Ok(config),
-        Err(error) => Err(Error::InvalidYaml(error)),
+    fn parse_config(config: &'_ str) -> Result<Config> {
+        match serde_yaml::from_str(config) {
+            Ok(config) => Ok(config),
+            Err(error) => Err(Error::InvalidYaml(error)),
+        }
     }
 }
 
