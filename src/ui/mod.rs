@@ -24,7 +24,11 @@ use tui::{
     Terminal,
 };
 
-use crate::{events::{Event, ViewEvent}, input::{Input, InputEvent, InputKind}, state::AppState};
+use crate::{
+    events::{Event, ViewEvent},
+    input::{Input, InputEvent, InputKind},
+    state::AppState,
+};
 
 use self::view::{
     achievements::AchievementsView, dailies::DailiesView, status::StatusView, timer::TimerView,

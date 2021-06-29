@@ -21,7 +21,17 @@ use signal_hook_tokio::Signals;
 use state::AppState;
 use tokio::{select, sync::mpsc};
 
-use crate::{cli::{Options, config_path}, client::CachedClient, config::Config, events::{Event, EventLoop, StateEvent}, fetch::Fetch, log::setup_logger, signals::handle_signals, tracks::{Reader, Track}, ui::UI};
+use crate::{
+    cli::{config_path, Options},
+    client::CachedClient,
+    config::Config,
+    events::{Event, EventLoop, StateEvent},
+    fetch::Fetch,
+    log::setup_logger,
+    signals::handle_signals,
+    tracks::{Reader, Track},
+    ui::UI,
+};
 
 #[macro_use]
 extern crate serde_derive;
