@@ -21,7 +21,16 @@ use signal_hook_tokio::Signals;
 use state::AppState;
 use tokio::{select, sync::mpsc};
 
-use crate::{cli::{config_path, Options}, client::CachedClient, config::Config, events::{Event, EventLoop, StateEvent}, fetch::Fetch, log::setup_logger, signals::handle_signals, tracks::Tracks, ui::UI};
+use crate::{
+    cli::{config_path, Options},
+    client::CachedClient,
+    config::Config,
+    events::{Event, EventLoop, StateEvent},
+    fetch::Fetch,
+    log::setup_logger,
+    signals::handle_signals,
+    ui::UI,
+};
 
 #[macro_use]
 extern crate serde_derive;
@@ -58,10 +67,10 @@ pub async fn main() -> Result {
     let (tx_event, rx_event) = mpsc::unbounded_channel::<Event>();
     let (tx_view_event, rx_view_event) = mpsc::unbounded_channel::<ViewEvent>();
 
-    let tracks = Tracks::load("tracks.json");
-    let _ = tx_event.send(Event::State(StateEvent::LoadTracks(tracks.items().clone())));
-
-    let app_state = Rc::new(AppState::new(tracks));
+    let app_state = Rc::new(AppState::load("state.json"));
+    let _ = tx_event.send(Event::State(StateEvent::LoadTracks(
+        app_state.tracked_items(),
+    )));
 
     let client = Arc::new(CachedClient::new(config).map_err(Error::Client)?);
 

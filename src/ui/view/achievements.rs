@@ -297,16 +297,21 @@ impl View for AchievementsView {
 
     fn handle_view_event(&mut self, event: &ViewEvent) {
         match event {
-            ViewEvent::UpdateAchievements => {
-                self.achievements = self
-                    .app_state
-                    .achievements()
+            ViewEvent::UpdateAchievements(all_achievements) => {
+                self.achievements = all_achievements
                     .into_iter()
+                    .map(|achievement| (achievement.id, achievement.to_owned()))
                     .collect::<BTreeMap<usize, Achievement>>();
                 self.update_filter()
             }
-            &ViewEvent::UpdateAccountAchievements => {
-                self.account_achievements = self.app_state.account_achievements()
+            ViewEvent::UpdateAccountAchievements(all_account_achievements) => {
+                self.account_achievements = all_account_achievements
+                    .0
+                    .iter()
+                    .map(|account_achievement| {
+                        (account_achievement.id, account_achievement.to_owned())
+                    })
+                    .collect();
             }
             _ => {}
         };

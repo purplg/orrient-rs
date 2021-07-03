@@ -1,4 +1,4 @@
-use std::{sync::Arc, time::Duration};
+use std::{collections::HashSet, sync::Arc, time::Duration};
 
 use log::debug;
 use tokio::sync::mpsc::UnboundedSender;
@@ -42,19 +42,18 @@ impl Fetch {
     async fn fetch_achievements(&self) {
         let paged_ids = self.all_achievement_ids.chunks(100);
         let total_pages = paged_ids.clone().count();
+        let mut all_achievements = HashSet::with_capacity(self.all_achievement_ids.len());
         for (current_page, ids) in paged_ids.enumerate() {
             match self
                 .client
                 .request_many::<Achievement, usize>(&ids.to_vec())
                 .await
             {
-                Ok(achievements) => {
+                Ok(achievement_page) => {
                     let progress: f64 = current_page as f64 / (total_pages - 1) as f64;
-                    let _ = self
-                        .tx_state
-                        .send(Event::State(StateEvent::FetchedAchievements {
-                            achievements,
-                        }));
+                    for achievement in achievement_page {
+                        all_achievements.insert(achievement);
+                    }
                     let _ = self
                         .tx_state
                         .send(Event::View(ViewEvent::UpdateStatus(format!(
@@ -69,7 +68,7 @@ impl Fetch {
         }
         let _ = self
             .tx_state
-            .send(Event::State(StateEvent::AchievementsLoaded));
+            .send(Event::State(StateEvent::AchievementsLoaded(all_achievements)));
         let _ = self.tx_state.send(Event::View(ViewEvent::UpdateStatus(
             "Done loading achievements...".to_string(),
         )));
@@ -90,9 +89,7 @@ impl Fetch {
             Ok(all_account_achievements) => {
                 let _ = self
                     .tx_state
-                    .send(Event::State(StateEvent::FetchedAccountAchievements {
-                        all_account_achievements,
-                    }));
+                    .send(Event::State(StateEvent::AccountAchievementsLoaded(all_account_achievements)));
                 let _ = self.tx_state.send(Event::View(ViewEvent::UpdateStatus(
                     "Updated achievement progress".to_string(),
                 )));

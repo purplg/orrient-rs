@@ -2,6 +2,8 @@
 //!
 //! [Official documentation](https://wiki.guildwars2.com/wiki/API:Main)
 
+use std::{collections::HashSet, hash::Hash};
+
 pub mod endpoints;
 
 /// A list of all available IDs of achievements
@@ -9,7 +11,7 @@ pub mod endpoints;
 pub struct AllAchievementIDs(pub Vec<usize>);
 
 /// Data about a specific achievement
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Eq, Clone, Debug)]
 pub struct Achievement {
     pub id: usize,
     pub icon: Option<String>,
@@ -27,12 +29,24 @@ pub struct Achievement {
     pub point_cap: Option<i32>,
 }
 
+impl PartialEq for Achievement {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
+impl Hash for Achievement {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.id.hash(state)
+    }
+}
+
 /// A list of all achievements with progress on the users account
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct AllAccountAchievements(pub Vec<AccountAchievement>);
+pub struct AllAccountAchievements(pub HashSet<AccountAchievement>);
 
 /// Progress by the user for a specific achievement
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Eq, Clone, Debug)]
 pub struct AccountAchievement {
     pub id: usize,
     pub bits: Option<Vec<usize>>,
@@ -43,13 +57,25 @@ pub struct AccountAchievement {
     pub unlocked: Option<bool>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+impl PartialEq for AccountAchievement {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
+impl Hash for AccountAchievement {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.id.hash(state)
+    }
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
 pub struct AchievementTier {
     pub count: usize,
     pub points: usize,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
 #[serde(tag = "type")]
 pub enum Reward {
     Coins { count: usize },
@@ -58,7 +84,7 @@ pub enum Reward {
     Title { id: usize },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
 pub struct AchievementBit {
     #[serde(alias = "type")]
     pub bit_type: Option<String>,

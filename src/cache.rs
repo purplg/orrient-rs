@@ -1,4 +1,5 @@
 use chrono::serde::ts_seconds;
+use std::collections::HashSet;
 use std::io::BufReader;
 use std::io::Read;
 use std::ops::Add;
@@ -63,7 +64,7 @@ struct CacheContents {
     invalid: RwLock<bool>, // TODO Should probably move this up to [Cache] somehow.
     all_achievements_ids: RwLock<Option<CachedItem<AllAchievementIDs>>>,
     achievements: RwLock<HashMap<usize, CachedItem<Achievement>>>,
-    account_achievements: RwLock<Option<CachedItem<Vec<AccountAchievement>>>>,
+    account_achievements: RwLock<Option<CachedItem<HashSet<AccountAchievement>>>>,
     dailies: RwLock<Option<CachedItem<Dailies>>>,
 }
 
@@ -228,7 +229,13 @@ impl CacheItem<usize> for AccountAchievement {
                 cache
                     .as_ref()
                     .filter(|cached_item| !cached_item.expired())
-                    .map(|cached_item| cached_item.inner.get(*id).cloned())
+                    .map(|cached_item| {
+                        cached_item
+                            .inner
+                            .iter()
+                            .find(|a| a.id == *id)
+                            .map(ToOwned::to_owned)
+                    })
                     .flatten()
             })
             .ok()

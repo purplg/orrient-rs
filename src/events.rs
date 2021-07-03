@@ -2,7 +2,11 @@ use std::{collections::HashSet, rc::Rc};
 
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
-use crate::{api::{Achievement, AllAccountAchievements, Dailies}, state::AppState, tracks::Track};
+use crate::{
+    api::{Achievement, AllAccountAchievements, Dailies},
+    state::AppState,
+    tracks::Track,
+};
 
 #[derive(Debug)]
 pub enum Event {
@@ -16,22 +20,17 @@ pub enum StateEvent {
     LoadTracks(HashSet<Track>),
     AddTrack(Track),
     ToggleTrack(Track),
-    FetchedAchievements {
-        achievements: Vec<Achievement>,
-    },
-    FetchedAccountAchievements {
-        all_account_achievements: AllAccountAchievements,
-    },
-    AchievementsLoaded,
+    AccountAchievementsLoaded(AllAccountAchievements),
+    AchievementsLoaded(HashSet<Achievement>),
     FetchedDailies(Dailies),
 }
 
 #[derive(Debug)]
 pub enum ViewEvent {
     UpdateTracks,
-    UpdateAchievements,
-    UpdateAccountAchievements,
-    UpdateDailies,
+    UpdateAchievements(HashSet<Achievement>),
+    UpdateAccountAchievements(AllAccountAchievements),
+    UpdateDailies(Dailies),
     UpdateStatus(String),
     Quit,
 }
@@ -81,40 +80,25 @@ impl EventLoop {
                 }
                 StateEvent::AddTrack(track) => {
                     self.app_state.add_track(track);
-                    // TODO save app state
-                    // if let Err(err) = self.app_state.write(tracks) {
-                    //     error!("Error writing tracks: {}", err);
-                    // }
                     let _ = self.tx_event.send(Event::View(ViewEvent::UpdateTracks));
                 }
                 StateEvent::ToggleTrack(track) => {
                     self.app_state.toggle_track(track);
-                    // TODO save app state
-                    // if let Err(err) = self.tracks_writer.write(tracks) {
-                    //     error!("Error writing tracks: {}", err);
-                    // }
                     let _ = self.tx_event.send(Event::View(ViewEvent::UpdateTracks));
                 }
-                StateEvent::FetchedAchievements { achievements } => {
-                    self.app_state.insert_achievements(achievements);
-                }
-                StateEvent::AchievementsLoaded => {
+                StateEvent::AchievementsLoaded(all_achievements) => {
                     let _ = self
                         .tx_event
-                        .send(Event::View(ViewEvent::UpdateAchievements));
+                        .send(Event::View(ViewEvent::UpdateAchievements(all_achievements)));
                 }
-                StateEvent::FetchedAccountAchievements {
-                    all_account_achievements,
-                } => {
-                    self.app_state
-                        .set_account_achievements(all_account_achievements);
+                StateEvent::AccountAchievementsLoaded(all_account_achievements) => {
                     let _ = self
                         .tx_event
-                        .send(Event::View(ViewEvent::UpdateAccountAchievements));
+                        .send(Event::View(ViewEvent::UpdateAccountAchievements(all_account_achievements)));
                 }
                 StateEvent::FetchedDailies(dailies) => {
-                    self.app_state.set_dailies(dailies);
-                    let _ = self.tx_event.send(Event::View(ViewEvent::UpdateDailies));
+                    // self.app_state.set_dailies(dailies);
+                    let _ = self.tx_event.send(Event::View(ViewEvent::UpdateDailies(dailies)));
                 }
             },
         }

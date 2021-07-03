@@ -1,61 +1,23 @@
-use std::{
-    collections::{HashMap, HashSet},
-    sync::RwLock,
-};
+use std::{collections::HashSet, fs::File, io::BufWriter, path::PathBuf, sync::RwLock};
 
-use crate::{
-    api::{AccountAchievement, Achievement, AllAccountAchievements, Dailies},
-    tracks::{Track, Tracks},
-};
+use crate::tracks::{Track, Tracks};
 
+#[derive(Serialize, Deserialize, Default)]
 pub struct AppState {
-    achievements: RwLock<HashMap<usize, Achievement>>,
-    account_achievements: RwLock<HashMap<usize, AccountAchievement>>,
-    dailies: RwLock<Option<Dailies>>,
+    #[serde(skip)]
+    path: PathBuf,
     tracks: RwLock<Tracks>,
 }
 
 impl AppState {
-    pub fn new(tracks: Tracks) -> Self {
-        Self {
-            achievements: RwLock::new(HashMap::default()),
-            account_achievements: RwLock::new(HashMap::default()),
-            dailies: RwLock::new(None),
-            tracks: RwLock::new(tracks),
-        }
-    }
-
-    pub fn achievements(&self) -> HashMap<usize, Achievement> {
-        if let Ok(achievements) = self.achievements.read() {
-            achievements.clone()
-        } else {
-            HashMap::default()
-        }
-    }
-
-    pub fn insert_achievements(&self, new_achievements: Vec<Achievement>) {
-        if let Ok(mut achievements) = self.achievements.write() {
-            for achievement in new_achievements {
-                achievements.insert(achievement.id, achievement);
-            }
-        }
-    }
-
-    pub fn account_achievements(&self) -> HashMap<usize, AccountAchievement> {
-        if let Ok(account_achievements) = self.account_achievements.read() {
-            account_achievements.clone()
-        } else {
-            HashMap::default()
-        }
-    }
-
-    pub fn set_account_achievements(&self, all_account_achievements: AllAccountAchievements) {
-        if let Ok(mut account_achievements) = self.account_achievements.write() {
-            *account_achievements = all_account_achievements
-                .0
-                .iter()
-                .map(|account_achievement| (account_achievement.id, account_achievement.clone()))
-                .collect::<HashMap<usize, AccountAchievement>>();
+    pub fn load(path: &str) -> Self {
+        let path = PathBuf::from(path);
+        match File::open(path) {
+            Ok(file) => match serde_json::from_reader(&file) {
+                Ok(state) => state,
+                Err(_) => Self::default(),
+            },
+            Err(_) => Self::default(),
         }
     }
 
@@ -63,9 +25,7 @@ impl AppState {
         if let Ok(mut tracks) = self.tracks.write() {
             tracks.insert(track);
         }
-        if let Ok(tracks) = self.tracks.read() {
-            let _ = tracks.write();
-        }
+        let _ = self.write();
     }
 
     pub fn toggle_track(&self, track: Track) {
@@ -74,9 +34,7 @@ impl AppState {
                 tracks.insert(track);
             }
         }
-        if let Ok(tracks) = self.tracks.read() {
-            let _ = tracks.write();
-        }
+        let _ = self.write();
     }
 
     pub fn tracked_items(&self) -> HashSet<Track> {
@@ -95,17 +53,9 @@ impl AppState {
         }
     }
 
-    pub fn set_dailies(&self, new_dailies: Dailies) {
-        if let Ok(mut dailies) = self.dailies.write() {
-            *dailies = Some(new_dailies);
-        }
-    }
-
-    pub fn dailies(&self) -> Option<Dailies> {
-        if let Ok(dailies) = self.dailies.read() {
-            dailies.clone()
-        } else {
-            None
-        }
+    pub fn write(&self) -> Result<(), Box<dyn std::error::Error>> {
+        let bw = BufWriter::new(File::create(&self.path)?);
+        let _ = serde_json::to_writer(bw, &self.tracks)?;
+        Ok(())
     }
 }

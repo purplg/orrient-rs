@@ -1,4 +1,4 @@
-use std::{collections::HashMap, rc::Rc};
+use std::collections::HashMap;
 
 use tui::{
     backend::Backend,
@@ -13,22 +13,19 @@ use crate::{
     api::{Achievement, Dailies, Daily},
     events::ViewEvent,
     input::InputEvent,
-    state::AppState,
 };
 
 use super::View;
 
 pub struct DailiesView {
-    app_state: Rc<AppState>,
     achievements: HashMap<usize, Achievement>,
     dailies: Option<Dailies>,
     header_style: Style,
 }
 
 impl DailiesView {
-    pub fn new(app_state: Rc<AppState>) -> Self {
+    pub fn new() -> Self {
         DailiesView {
-            app_state,
             achievements: HashMap::default(),
             dailies: None,
             header_style: Style::default().add_modifier(Modifier::BOLD),
@@ -92,11 +89,14 @@ impl View for DailiesView {
 
     fn handle_view_event(&mut self, view_event: &ViewEvent) {
         match view_event {
-            ViewEvent::UpdateAchievements => {
-                self.achievements = self.app_state.achievements();
+            ViewEvent::UpdateAchievements(all_achievements) => {
+                self.achievements = all_achievements
+                    .into_iter()
+                    .map(|achievement| (achievement.id, achievement.to_owned()))
+                    .collect()
             }
-            ViewEvent::UpdateDailies => {
-                self.dailies = self.app_state.dailies();
+            ViewEvent::UpdateDailies(dailies) => {
+                self.dailies = Some(dailies.to_owned());
             }
             _ => {}
         }

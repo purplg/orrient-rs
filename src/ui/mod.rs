@@ -56,7 +56,7 @@ impl UI {
         let achievements_view = AchievementsView::new(app_state.clone(), tx_event.clone());
         let tracks_view = TracksView::new(app_state.clone(), tx_event);
         let status_view = StatusView::new(tx_view_event);
-        let dailies_view = DailiesView::new(app_state.clone());
+        let dailies_view = DailiesView::new();
         let timer_view = TimerView::new();
 
         Self {

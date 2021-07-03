@@ -1,25 +1,17 @@
 use std::{
     collections::{hash_set::IntoIter, HashSet},
-    fs::File,
-    io::BufWriter,
     ops::{Deref, DerefMut},
-    path::PathBuf,
 };
 
-use serde::{Deserialize, Serialize};
-
-#[derive(Debug)]
-pub struct Tracks {
-    path: PathBuf,
-    tracks: HashSet<Track>,
-}
+#[derive(Serialize, Deserialize, Debug, Default)]
+pub struct Tracks(HashSet<Track>);
 
 impl IntoIterator for Tracks {
     type Item = Track;
     type IntoIter = IntoIter<Track>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.tracks.into_iter()
+        self.0.into_iter()
     }
 }
 
@@ -27,13 +19,13 @@ impl Deref for Tracks {
     type Target = HashSet<Track>;
 
     fn deref(&self) -> &Self::Target {
-        &self.tracks
+        &self.0
     }
 }
 
 impl DerefMut for Tracks {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.tracks
+        &mut self.0
     }
 }
 
@@ -63,25 +55,7 @@ impl PartialEq for Track {
 }
 
 impl Tracks {
-    pub fn load(path: &str) -> Self {
-        let path = PathBuf::from(path);
-        let tracks = match File::open(&path) {
-            Ok(file) => match serde_json::from_reader(&file) {
-                Ok(cache) => cache,
-                Err(_) => HashSet::default(),
-            },
-            Err(_) => HashSet::default(),
-        };
-        Self { path, tracks }
-    }
-
-    pub fn write(&self) -> Result<(), Box<dyn std::error::Error>> {
-        let bw = BufWriter::new(File::create(&self.path)?);
-        let _ = serde_json::to_writer(bw, &self.tracks)?;
-        Ok(())
-    }
-
     pub fn items(&self) -> &HashSet<Track> {
-        &self.tracks
+        &self.0
     }
 }
