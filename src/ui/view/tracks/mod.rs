@@ -256,7 +256,11 @@ impl View for TracksView {
                 self.account_achievements = self.app_state.account_achievements();
             }
             ViewEvent::UpdateTracks => {
-                self.tracks = self.app_state.tracked_items();
+                self.tracks = self
+                    .app_state
+                    .tracked_items()
+                    .into_iter()
+                    .collect::<Vec<Track>>();
                 self.list_state
                     .move_cursor(self.tracks.len(), CursorMovement::None);
             }

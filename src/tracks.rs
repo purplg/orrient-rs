@@ -1,48 +1,87 @@
-use std::{fs::File, io::BufWriter, marker::PhantomData, path::PathBuf};
+use std::{
+    collections::{hash_set::IntoIter, HashSet},
+    fs::File,
+    io::BufWriter,
+    ops::{Deref, DerefMut},
+    path::PathBuf,
+};
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
+#[derive(Debug)]
+pub struct Tracks {
+    path: PathBuf,
+    tracks: HashSet<Track>,
+}
+
+impl IntoIterator for Tracks {
+    type Item = Track;
+    type IntoIter = IntoIter<Track>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.tracks.into_iter()
+    }
+}
+
+impl Deref for Tracks {
+    type Target = HashSet<Track>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.tracks
+    }
+}
+
+impl DerefMut for Tracks {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.tracks
+    }
+}
+
+#[derive(Serialize, Deserialize, Hash, Eq, Clone, Debug)]
 pub enum Track {
     Achievement(usize),
     Custom(String),
 }
 
-impl Reader<'_, Track> for Track {
-    fn load(path: &str) -> (Vec<Track>, Writer<Vec<Track>>) {
-        let path = PathBuf::from(path);
-        (
-            match File::open(&path) {
-                Ok(file) => match serde_json::from_reader(&file) {
-                    Ok(cache) => cache,
-                    Err(_) => Vec::default(),
-                },
-                Err(_) => Vec::default(),
-            },
-            Writer {
-                path,
-                _phantom_data: PhantomData::default(),
-            },
-        )
+impl PartialEq for Track {
+    fn eq(&self, other: &Self) -> bool {
+        match self {
+            Track::Achievement(id) => {
+                if let Track::Achievement(other_id) = other {
+                    return id == other_id;
+                }
+                return false;
+            }
+            Track::Custom(content) => {
+                if let Track::Custom(other_content) = other {
+                    return content == other_content;
+                }
+                return false;
+            }
+        }
     }
 }
 
-pub trait Reader<'de, T>
-where
-    T: Deserialize<'de> + Serialize,
-{
-    fn load(path: &str) -> (Vec<T>, Writer<Vec<T>>);
-}
+impl Tracks {
+    pub fn load(path: &str) -> Self {
+        let path = PathBuf::from(path);
+        let tracks = match File::open(&path) {
+            Ok(file) => match serde_json::from_reader(&file) {
+                Ok(cache) => cache,
+                Err(_) => HashSet::default(),
+            },
+            Err(_) => HashSet::default(),
+        };
+        Self { path, tracks }
+    }
 
-pub struct Writer<T: Serialize> {
-    path: PathBuf,
-    _phantom_data: PhantomData<T>,
-}
-
-impl<T: Serialize> Writer<T> {
-    pub fn write(&self, content: T) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn write(&self) -> Result<(), Box<dyn std::error::Error>> {
         let bw = BufWriter::new(File::create(&self.path)?);
-        let _ = serde_json::to_writer(bw, &content)?;
+        let _ = serde_json::to_writer(bw, &self.tracks)?;
         Ok(())
+    }
+
+    pub fn items(&self) -> &HashSet<Track> {
+        &self.tracks
     }
 }

@@ -170,7 +170,7 @@ impl View for AchievementsView {
                     achievement,
                     account_achievement,
                     self.app_state
-                        .is_tracked(Track::Achievement(achievement.id)),
+                        .is_tracked(&Track::Achievement(achievement.id)),
                     &self.style,
                 )
             })

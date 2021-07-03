@@ -1,24 +1,27 @@
-use std::{collections::HashMap, sync::RwLock};
+use std::{
+    collections::{HashMap, HashSet},
+    sync::RwLock,
+};
 
 use crate::{
     api::{AccountAchievement, Achievement, AllAccountAchievements, Dailies},
-    tracks::Track,
+    tracks::{Track, Tracks},
 };
 
 pub struct AppState {
     achievements: RwLock<HashMap<usize, Achievement>>,
     account_achievements: RwLock<HashMap<usize, AccountAchievement>>,
-    tracked_items: RwLock<Vec<Track>>,
     dailies: RwLock<Option<Dailies>>,
+    tracks: RwLock<Tracks>,
 }
 
 impl AppState {
-    pub fn new() -> Self {
+    pub fn new(tracks: Tracks) -> Self {
         Self {
             achievements: RwLock::new(HashMap::default()),
             account_achievements: RwLock::new(HashMap::default()),
-            tracked_items: RwLock::new(Vec::default()),
             dailies: RwLock::new(None),
+            tracks: RwLock::new(tracks),
         }
     }
 
@@ -57,34 +60,36 @@ impl AppState {
     }
 
     pub fn add_track(&self, track: Track) {
-        if let Ok(mut tracked_items) = self.tracked_items.write() {
-            if tracked_items.iter().find(|t| (*t).eq(&track)).is_none() {
-                tracked_items.push(track);
-            }
+        if let Ok(mut tracks) = self.tracks.write() {
+            tracks.insert(track);
+        }
+        if let Ok(tracks) = self.tracks.read() {
+            let _ = tracks.write();
         }
     }
 
     pub fn toggle_track(&self, track: Track) {
-        if let Ok(mut tracked_achievements) = self.tracked_items.write() {
-            if let Some(index) = tracked_achievements.iter().position(|t| t.eq(&track)) {
-                tracked_achievements.remove(index);
-            } else {
-                tracked_achievements.push(track);
+        if let Ok(mut tracks) = self.tracks.write() {
+            if !tracks.remove(&track) {
+                tracks.insert(track);
             }
         }
-    }
-
-    pub fn tracked_items(&self) -> Vec<Track> {
-        if let Ok(tracked_items) = self.tracked_items.read() {
-            tracked_items.clone()
-        } else {
-            Vec::default()
+        if let Ok(tracks) = self.tracks.read() {
+            let _ = tracks.write();
         }
     }
 
-    pub fn is_tracked(&self, track: Track) -> bool {
-        if let Ok(tracked_items) = self.tracked_items.read() {
-            tracked_items.contains(&track)
+    pub fn tracked_items(&self) -> HashSet<Track> {
+        if let Ok(tracks) = self.tracks.read() {
+            tracks.items().clone()
+        } else {
+            HashSet::default()
+        }
+    }
+
+    pub fn is_tracked(&self, track: &Track) -> bool {
+        if let Ok(tracks) = self.tracks.read() {
+            tracks.contains(track)
         } else {
             false
         }

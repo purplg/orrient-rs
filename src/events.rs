@@ -1,13 +1,8 @@
-use std::rc::Rc;
+use std::{collections::HashSet, rc::Rc};
 
-use log::error;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
-use crate::{
-    api::{Achievement, AllAccountAchievements, Dailies},
-    state::AppState,
-    tracks::{Track, Writer},
-};
+use crate::{api::{Achievement, AllAccountAchievements, Dailies}, state::AppState, tracks::Track};
 
 #[derive(Debug)]
 pub enum Event {
@@ -18,7 +13,7 @@ pub enum Event {
 #[derive(Debug)]
 pub enum StateEvent {
     Quit,
-    LoadTracks(Vec<Track>),
+    LoadTracks(HashSet<Track>),
     AddTrack(Track),
     ToggleTrack(Track),
     FetchedAchievements {
@@ -46,7 +41,6 @@ pub struct EventLoop {
     tx_event: UnboundedSender<Event>,
     rx_event: UnboundedReceiver<Event>,
     tx_view: UnboundedSender<ViewEvent>,
-    tracks_writer: Writer<Vec<Track>>,
 }
 
 impl EventLoop {
@@ -55,14 +49,12 @@ impl EventLoop {
         tx_event: UnboundedSender<Event>,
         rx_event: UnboundedReceiver<Event>,
         tx_view: UnboundedSender<ViewEvent>,
-        tracks_writer: Writer<Vec<Track>>,
     ) -> Self {
         Self {
             app_state,
             tx_event,
             rx_event,
             tx_view,
-            tracks_writer,
         }
     }
 
@@ -89,18 +81,18 @@ impl EventLoop {
                 }
                 StateEvent::AddTrack(track) => {
                     self.app_state.add_track(track);
-                    let tracks = self.app_state.tracked_items();
-                    if let Err(err) = self.tracks_writer.write(tracks) {
-                        error!("Error writing tracks: {}", err);
-                    }
+                    // TODO save app state
+                    // if let Err(err) = self.app_state.write(tracks) {
+                    //     error!("Error writing tracks: {}", err);
+                    // }
                     let _ = self.tx_event.send(Event::View(ViewEvent::UpdateTracks));
                 }
                 StateEvent::ToggleTrack(track) => {
                     self.app_state.toggle_track(track);
-                    let tracks = self.app_state.tracked_items();
-                    if let Err(err) = self.tracks_writer.write(tracks) {
-                        error!("Error writing tracks: {}", err);
-                    }
+                    // TODO save app state
+                    // if let Err(err) = self.tracks_writer.write(tracks) {
+                    //     error!("Error writing tracks: {}", err);
+                    // }
                     let _ = self.tx_event.send(Event::View(ViewEvent::UpdateTracks));
                 }
                 StateEvent::FetchedAchievements { achievements } => {
