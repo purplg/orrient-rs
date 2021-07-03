@@ -2,12 +2,10 @@ use std::{collections::HashMap, sync::RwLock};
 
 use crate::{
     api::{AccountAchievement, Achievement, AllAccountAchievements, Dailies},
-    config::Config,
     tracks::Track,
 };
 
 pub struct AppState {
-    current_tab: RwLock<usize>,
     achievements: RwLock<HashMap<usize, Achievement>>,
     account_achievements: RwLock<HashMap<usize, AccountAchievement>>,
     tracked_items: RwLock<Vec<Track>>,
@@ -15,9 +13,8 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub fn new(config: &Config) -> Self {
+    pub fn new() -> Self {
         Self {
-            current_tab: RwLock::new(config.starting_tab - 1),
             achievements: RwLock::new(HashMap::default()),
             account_achievements: RwLock::new(HashMap::default()),
             tracked_items: RwLock::new(Vec::default()),
@@ -90,19 +87,6 @@ impl AppState {
             tracked_items.contains(&track)
         } else {
             false
-        }
-    }
-
-    pub fn select_tab(&self, tab_index: usize) {
-        if let Ok(mut current_tab) = self.current_tab.write() {
-            *current_tab = tab_index;
-        }
-    }
-
-    pub fn current_tab(&self) -> Option<usize> {
-        match self.current_tab.read() {
-            Ok(current_tab) => Some(*current_tab),
-            _ => None,
         }
     }
 

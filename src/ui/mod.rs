@@ -36,7 +36,6 @@ use self::view::{
 };
 
 pub struct UI {
-    app_state: Rc<AppState>,
     rx_view_event: UnboundedReceiver<ViewEvent>,
     status_view: StatusView,
     tracks_view: TracksView,
@@ -44,6 +43,7 @@ pub struct UI {
     dailies_view: DailiesView,
     timer_view: TimerView,
     quit: bool,
+    current_tab: usize,
 }
 
 impl UI {
@@ -60,7 +60,6 @@ impl UI {
         let timer_view = TimerView::new();
 
         Self {
-            app_state,
             rx_view_event,
             achievements_view,
             tracks_view,
@@ -68,6 +67,7 @@ impl UI {
             dailies_view,
             timer_view,
             quit: false,
+            current_tab: 0, // TODO populate default from config
         }
     }
 
@@ -109,17 +109,17 @@ impl UI {
 
     pub fn handle_input_event(&mut self, input_event: InputEvent) {
         // Pass input events to current view
-        if !match self.app_state.current_tab() {
-            Some(0) => self.tracks_view.handle_input_event(&input_event),
-            Some(1) => self.achievements_view.handle_input_event(&input_event),
-            Some(2) => self.dailies_view.handle_input_event(&input_event),
-            Some(3) => self.timer_view.handle_input_event(&input_event),
+        if !match self.current_tab {
+            0 => self.tracks_view.handle_input_event(&input_event),
+            1 => self.achievements_view.handle_input_event(&input_event),
+            2 => self.dailies_view.handle_input_event(&input_event),
+            3 => self.timer_view.handle_input_event(&input_event),
             _ => false,
         } {
             // If view doesn't consume input, handle it locally
             match input_event.input {
                 InputKind::Quit => self.quit = true,
-                InputKind::SwitchTab(tab_index) => self.app_state.select_tab(tab_index),
+                InputKind::SwitchTab(tab_index) => self.current_tab = tab_index,
                 _ => {}
             }
         }
@@ -150,7 +150,7 @@ impl UI {
                 .fg(Color::White),
         )
         .style(Style::default().fg(Color::DarkGray))
-        .select(self.app_state.current_tab().unwrap_or_default());
+        .select(self.current_tab);
 
         let _ = terminal.draw(|frame| {
             let chunks = Layout::default()
@@ -166,11 +166,11 @@ impl UI {
             frame.render_widget(tabs, chunks[0]);
 
             // Draw main center panel
-            match self.app_state.current_tab() {
-                Some(0) => self.tracks_view.draw(frame, chunks[1]),
-                Some(1) => self.achievements_view.draw(frame, chunks[1]),
-                Some(2) => self.dailies_view.draw(frame, chunks[1]),
-                Some(3) => self.timer_view.draw(frame, chunks[1]),
+            match self.current_tab {
+                0 => self.tracks_view.draw(frame, chunks[1]),
+                1 => self.achievements_view.draw(frame, chunks[1]),
+                2 => self.dailies_view.draw(frame, chunks[1]),
+                3 => self.timer_view.draw(frame, chunks[1]),
                 _ => {}
             }
 

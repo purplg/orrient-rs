@@ -71,7 +71,7 @@ pub async fn main() -> Result {
     let (tracks, tracks_writer) = Track::load("tracks.json");
     let _ = tx_event.send(Event::State(StateEvent::LoadTracks(tracks)));
 
-    let app_state = Rc::new(AppState::new(&config));
+    let app_state = Rc::new(AppState::new());
 
     let client = Arc::new(CachedClient::new(config).map_err(Error::Client)?);
 
