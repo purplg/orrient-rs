@@ -27,7 +27,7 @@ pub enum StateEvent {
 
 #[derive(Debug)]
 pub enum ViewEvent {
-    UpdateTracks,
+    UpdateTracks(HashSet<Track>),
     UpdateAchievements(HashSet<Achievement>),
     UpdateAccountAchievements(AllAccountAchievements),
     UpdateDailies(Dailies),
@@ -76,15 +76,21 @@ impl EventLoop {
                     for track in tracks {
                         self.app_state.add_track(track);
                     }
-                    let _ = self.tx_event.send(Event::View(ViewEvent::UpdateTracks));
+                    let _ = self.tx_event.send(Event::View(ViewEvent::UpdateTracks(
+                        self.app_state.tracked_items(),
+                    )));
                 }
                 StateEvent::AddTrack(track) => {
                     self.app_state.add_track(track);
-                    let _ = self.tx_event.send(Event::View(ViewEvent::UpdateTracks));
+                    let _ = self.tx_event.send(Event::View(ViewEvent::UpdateTracks(
+                        self.app_state.tracked_items(),
+                    )));
                 }
                 StateEvent::ToggleTrack(track) => {
                     self.app_state.toggle_track(track);
-                    let _ = self.tx_event.send(Event::View(ViewEvent::UpdateTracks));
+                    let _ = self.tx_event.send(Event::View(ViewEvent::UpdateTracks(
+                        self.app_state.tracked_items(),
+                    )));
                 }
                 StateEvent::AchievementsLoaded(all_achievements) => {
                     let _ = self
@@ -94,10 +100,14 @@ impl EventLoop {
                 StateEvent::AccountAchievementsLoaded(all_account_achievements) => {
                     let _ = self
                         .tx_event
-                        .send(Event::View(ViewEvent::UpdateAccountAchievements(all_account_achievements)));
+                        .send(Event::View(ViewEvent::UpdateAccountAchievements(
+                            all_account_achievements,
+                        )));
                 }
                 StateEvent::FetchedDailies(dailies) => {
-                    let _ = self.tx_event.send(Event::View(ViewEvent::UpdateDailies(dailies)));
+                    let _ = self
+                        .tx_event
+                        .send(Event::View(ViewEvent::UpdateDailies(dailies)));
                 }
             },
         }

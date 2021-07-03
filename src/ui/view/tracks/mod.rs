@@ -264,12 +264,8 @@ impl View for TracksView {
                     })
                     .collect()
             }
-            ViewEvent::UpdateTracks => {
-                self.tracks = self
-                    .app_state
-                    .tracked_items()
-                    .into_iter()
-                    .collect::<Vec<Track>>();
+            ViewEvent::UpdateTracks(tracks) => {
+                self.tracks = tracks.into_iter().map(ToOwned::to_owned).collect();
                 self.list_state
                     .move_cursor(self.tracks.len(), CursorMovement::None);
             }
