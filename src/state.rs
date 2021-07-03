@@ -10,14 +10,21 @@ pub struct AppState {
 }
 
 impl AppState {
+    fn new(path: PathBuf) -> Self {
+        Self {
+            path,
+            tracks: RwLock::new(Tracks::default()),
+        }
+    }
+
     pub fn load(path: &str) -> Self {
         let path = PathBuf::from(path);
-        match File::open(path) {
+        match File::open(&path) {
             Ok(file) => match serde_json::from_reader(&file) {
                 Ok(state) => state,
-                Err(_) => Self::default(),
+                Err(_) => Self::new(path),
             },
-            Err(_) => Self::default(),
+            Err(_) => Self::new(path),
         }
     }
 
@@ -55,7 +62,7 @@ impl AppState {
 
     pub fn write(&self) -> Result<(), Box<dyn std::error::Error>> {
         let bw = BufWriter::new(File::create(&self.path)?);
-        let _ = serde_json::to_writer(bw, &self.tracks)?;
+        let _ = serde_json::to_writer(bw, &self)?;
         Ok(())
     }
 }
