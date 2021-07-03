@@ -97,7 +97,6 @@ impl EventLoop {
                         .send(Event::View(ViewEvent::UpdateAccountAchievements(all_account_achievements)));
                 }
                 StateEvent::FetchedDailies(dailies) => {
-                    // self.app_state.set_dailies(dailies);
                     let _ = self.tx_event.send(Event::View(ViewEvent::UpdateDailies(dailies)));
                 }
             },
