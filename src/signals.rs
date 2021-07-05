@@ -3,7 +3,7 @@ use signal_hook::consts::{SIGINT, SIGQUIT, SIGTERM};
 use signal_hook_tokio::Signals;
 use tokio::sync::mpsc::UnboundedSender;
 
-use crate::events::{Event, StateEvent};
+use crate::events::Event;
 
 pub(crate) async fn handle_signals(signals: Signals, tx_event: UnboundedSender<Event>) {
     let handle = signals.handle();
@@ -11,7 +11,7 @@ pub(crate) async fn handle_signals(signals: Signals, tx_event: UnboundedSender<E
     while let Some(signal) = signals.next().await {
         match signal {
             SIGINT | SIGQUIT | SIGTERM => {
-                let _ = tx_event.send(Event::State(StateEvent::Quit));
+                let _ = tx_event.send(Event::Quit);
             }
             _ => unreachable!(),
         }

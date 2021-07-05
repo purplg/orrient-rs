@@ -14,7 +14,7 @@ use std::{collections::HashMap, rc::Rc};
 
 use crate::{
     api::{AccountAchievement, Achievement},
-    events::{Event, StateEvent, ViewEvent},
+    events::Event,
     state::AppState,
     tracks::Track,
     ui::widget::list_selection::ListSelection,
@@ -44,14 +44,17 @@ pub struct TracksView {
 
 impl TracksView {
     pub fn new(app_state: Rc<AppState>, tx_state: UnboundedSender<Event>) -> Self {
+        let tracks: Vec<Track> = app_state.tracked_items().into_iter().collect();
+        let mut list_state = ListState::default();
+        list_state.move_cursor(tracks.len(), CursorMovement::None);
         TracksView {
             app_state,
             tx_state,
-            list_state: ListState::default(),
+            list_state,
             tier_progress_bar_height: 1,
             achievements: HashMap::default(),
             account_achievements: HashMap::default(),
-            tracks: Vec::default(),
+            tracks,
             add_track_popup: CustomTrackPopupState::default(),
             inserting: false,
         }
@@ -213,9 +216,7 @@ impl View for TracksView {
                 }
                 InputKind::Select => {
                     if let Some(track) = self.selected_track() {
-                        let _ = self
-                            .tx_state
-                            .send(Event::State(StateEvent::ToggleTrack(track)));
+                        let _ = self.tx_state.send(Event::ToggleTrack(track));
                     }
                     true
                 }
@@ -234,9 +235,7 @@ impl View for TracksView {
                     if self.inserting {
                         self.inserting = false;
                         let track = self.add_track_popup.finish();
-                        let _ = self
-                            .tx_state
-                            .send(Event::State(StateEvent::AddTrack(track)));
+                        let _ = self.tx_state.send(Event::AddTrack(track));
                     }
                     true
                 }
@@ -247,15 +246,15 @@ impl View for TracksView {
         }
     }
 
-    fn handle_view_event(&mut self, event: &ViewEvent) {
+    fn handle_event(&mut self, event: &Event) {
         match event {
-            ViewEvent::UpdateAchievements(all_achievements) => {
+            Event::AchievementsLoaded(all_achievements) => {
                 self.achievements = all_achievements
                     .into_iter()
                     .map(|achievement| (achievement.id, achievement.to_owned()))
                     .collect();
             }
-            ViewEvent::UpdateAccountAchievements(all_account_achievements) => {
+            Event::AccountAchievementsLoaded(all_account_achievements) => {
                 self.account_achievements = all_account_achievements
                     .0
                     .iter()
@@ -264,10 +263,8 @@ impl View for TracksView {
                     })
                     .collect()
             }
-            ViewEvent::UpdateTracks(tracks) => {
-                self.tracks = tracks.into_iter().map(ToOwned::to_owned).collect();
-                self.list_state
-                    .move_cursor(self.tracks.len(), CursorMovement::None);
+            Event::ToggleTrack(_) | Event::AddTrack(_) => {
+                self.tracks = self.app_state.tracked_items().into_iter().collect();
             }
             _ => {}
         }

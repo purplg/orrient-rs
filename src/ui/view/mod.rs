@@ -7,11 +7,11 @@ pub mod tracks;
 
 use tui::{backend::Backend, layout::Rect, Frame};
 
-use crate::{events::ViewEvent, input::InputEvent};
+use crate::{events::Event, input::InputEvent};
 
 pub trait View {
     fn draw<B: Backend>(&mut self, _: &mut Frame<B>, _: Rect);
 
     fn handle_input_event(&mut self, _: &InputEvent) -> bool;
-    fn handle_view_event(&mut self, _: &ViewEvent);
+    fn handle_event(&mut self, _: &Event);
 }

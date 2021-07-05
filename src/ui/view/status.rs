@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use crate::{events::ViewEvent, input::InputEvent};
+use crate::{events::Event, input::InputEvent};
 use futures::FutureExt;
 use tokio::{sync::mpsc::UnboundedSender, task::JoinHandle};
 use tui::{
@@ -13,15 +13,15 @@ use super::View;
 
 pub struct StatusView {
     message: String,
-    tx_view_event: UnboundedSender<ViewEvent>,
+    tx_event: UnboundedSender<Event>,
     status_timeout_handle: Option<JoinHandle<()>>,
 }
 
 impl StatusView {
-    pub fn new(tx_view_event: UnboundedSender<ViewEvent>) -> Self {
+    pub fn new(tx_event: UnboundedSender<Event>) -> Self {
         StatusView {
             message: String::default(),
-            tx_view_event,
+            tx_event,
             status_timeout_handle: None,
         }
     }
@@ -32,7 +32,7 @@ impl StatusView {
         if let Some(handle) = &self.status_timeout_handle {
             handle.abort();
         }
-        self.status_timeout_handle = Some(status_timeout(self.tx_view_event.clone()));
+        self.status_timeout_handle = Some(status_timeout(self.tx_event.clone()));
     }
 }
 
@@ -48,17 +48,17 @@ impl View for StatusView {
         false
     }
 
-    fn handle_view_event(&mut self, view_event: &ViewEvent) {
-        if let ViewEvent::UpdateStatus(message) = view_event {
+    fn handle_event(&mut self, event: &Event) {
+        if let Event::StatusMessage(message) = event {
             self.message = message.clone();
             self.start_timeout();
         }
     }
 }
 
-fn status_timeout(tx_view_event: UnboundedSender<ViewEvent>) -> JoinHandle<()> {
+fn status_timeout(tx_event: UnboundedSender<Event>) -> JoinHandle<()> {
     tokio::spawn(async move {
         tokio::time::sleep(Duration::from_secs(5)).fuse().await;
-        let _ = tx_view_event.send(ViewEvent::UpdateStatus("".to_string()));
+        let _ = tx_event.send(Event::StatusMessage("".to_string()));
     })
 }

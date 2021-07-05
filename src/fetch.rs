@@ -6,7 +6,7 @@ use tokio::sync::mpsc::UnboundedSender;
 use crate::{
     api::{Achievement, AllAccountAchievements, AllAchievementIDs, Dailies},
     client::CachedClient,
-    events::{Event, StateEvent, ViewEvent},
+    events::Event,
 };
 
 pub struct Fetch {
@@ -56,10 +56,10 @@ impl Fetch {
                     }
                     let _ = self
                         .tx_state
-                        .send(Event::View(ViewEvent::UpdateStatus(format!(
+                        .send(Event::StatusMessage(format!(
                             "Loading achievements... {}%",
                             (progress * 100.0) as u64
-                        ))));
+                        )));
                 }
                 Err(err) => {
                     debug!("Error fetching Achievements: {:?}", err);
@@ -68,10 +68,10 @@ impl Fetch {
         }
         let _ = self
             .tx_state
-            .send(Event::State(StateEvent::AchievementsLoaded(all_achievements)));
-        let _ = self.tx_state.send(Event::View(ViewEvent::UpdateStatus(
+            .send(Event::AchievementsLoaded(all_achievements));
+        let _ = self.tx_state.send(Event::StatusMessage(
             "Done loading achievements...".to_string(),
-        )));
+        ));
         self.client.write_cache();
     }
 
@@ -89,10 +89,10 @@ impl Fetch {
             Ok(all_account_achievements) => {
                 let _ = self
                     .tx_state
-                    .send(Event::State(StateEvent::AccountAchievementsLoaded(all_account_achievements)));
-                let _ = self.tx_state.send(Event::View(ViewEvent::UpdateStatus(
+                    .send(Event::AccountAchievementsLoaded(all_account_achievements));
+                let _ = self.tx_state.send(Event::StatusMessage(
                     "Updated achievement progress".to_string(),
-                )));
+                ));
             }
             Err(err) => debug!("Error fetching AllAccountAchievements: {:?}", err),
         }
@@ -104,7 +104,7 @@ impl Fetch {
             Ok(dailies) => {
                 let _ = self
                     .tx_state
-                    .send(Event::State(StateEvent::FetchedDailies(dailies)));
+                    .send(Event::FetchedDailies(dailies));
             }
             Err(err) => debug!("Error fetching Dailies: {:?}", err),
         }

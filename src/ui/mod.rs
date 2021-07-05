@@ -11,6 +11,7 @@ use std::{
 };
 
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
+use log::debug;
 use tokio::{
     select,
     sync::mpsc::{self, UnboundedReceiver, UnboundedSender},
@@ -25,7 +26,7 @@ use tui::{
 };
 
 use crate::{
-    events::{Event, ViewEvent},
+    events::Event,
     input::{Input, InputEvent, InputKind},
     state::AppState,
 };
@@ -36,7 +37,8 @@ use self::view::{
 };
 
 pub struct UI {
-    rx_view_event: UnboundedReceiver<ViewEvent>,
+    app_state: Rc<AppState>,
+    rx_event: UnboundedReceiver<Event>,
     status_view: StatusView,
     tracks_view: TracksView,
     achievements_view: AchievementsView,
@@ -50,17 +52,17 @@ impl UI {
     pub fn new(
         app_state: Rc<AppState>,
         tx_event: UnboundedSender<Event>,
-        tx_view_event: UnboundedSender<ViewEvent>,
-        rx_view_event: UnboundedReceiver<ViewEvent>,
+        rx_event: UnboundedReceiver<Event>,
     ) -> Self {
         let achievements_view = AchievementsView::new(app_state.clone(), tx_event.clone());
-        let tracks_view = TracksView::new(app_state.clone(), tx_event);
-        let status_view = StatusView::new(tx_view_event);
+        let tracks_view = TracksView::new(app_state.clone(), tx_event.clone());
+        let status_view = StatusView::new(tx_event);
         let dailies_view = DailiesView::new();
         let timer_view = TimerView::new();
 
         Self {
-            rx_view_event,
+            app_state,
+            rx_event,
             achievements_view,
             tracks_view,
             status_view,
@@ -96,8 +98,8 @@ impl UI {
                     self.handle_input_event(input_event);
                     self.render(&mut terminal);
                 },
-                Some(view_event) = self.rx_view_event.recv() => {
-                    self.handle_view_event(view_event);
+                Some(view_event) = self.rx_event.recv() => {
+                    self.handle_event(view_event);
                     self.render(&mut terminal);
                 }
             }
@@ -125,15 +127,22 @@ impl UI {
         }
     }
 
-    pub fn handle_view_event(&mut self, view_event: ViewEvent) {
-        if let ViewEvent::Quit = view_event {
-            self.quit = true;
+    pub fn handle_event(&mut self, event: Event) {
+        debug!("{:?}", event);
+        match &event {
+            Event::Quit => self.quit = true,
+            Event::ToggleTrack(track) => self.app_state.toggle_track(track.clone()),
+            Event::AddTrack(_) => {},
+            Event::AccountAchievementsLoaded(_) => {},
+            Event::AchievementsLoaded(_) => {},
+            Event::FetchedDailies(_) => {},
+            Event::StatusMessage(_) => {},
         }
-        self.status_view.handle_view_event(&view_event);
-        self.tracks_view.handle_view_event(&view_event);
-        self.achievements_view.handle_view_event(&view_event);
-        self.dailies_view.handle_view_event(&view_event);
-        self.timer_view.handle_view_event(&view_event);
+        self.status_view.handle_event(&event);
+        self.tracks_view.handle_event(&event);
+        self.achievements_view.handle_event(&event);
+        self.dailies_view.handle_event(&event);
+        self.timer_view.handle_event(&event);
     }
 
     fn render(&mut self, terminal: &mut Terminal<CrosstermBackend<Stdout>>) {

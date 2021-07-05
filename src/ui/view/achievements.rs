@@ -22,7 +22,7 @@ use tui::{
 
 use crate::{
     api::{AccountAchievement, Achievement},
-    events::{Event, StateEvent, ViewEvent},
+    events::Event,
     state::AppState,
     tracks::Track,
     ui::{component::achievement_info::AchievementInfo, widget::list_selection::ListSelection},
@@ -282,9 +282,8 @@ impl View for AchievementsView {
                 InputKind::Select => {
                     self.selected_id().map(|id| {
                         self.achievements.get(&id).map(|achievement| {
-                            self.tx_state.send(Event::State(StateEvent::ToggleTrack(
-                                Track::Achievement(achievement.id),
-                            )))
+                            self.tx_state
+                                .send(Event::ToggleTrack(Track::Achievement(achievement.id)))
                         })
                     });
                     return true;
@@ -295,16 +294,16 @@ impl View for AchievementsView {
         false
     }
 
-    fn handle_view_event(&mut self, event: &ViewEvent) {
+    fn handle_event(&mut self, event: &Event) {
         match event {
-            ViewEvent::UpdateAchievements(all_achievements) => {
+            Event::AchievementsLoaded(all_achievements) => {
                 self.achievements = all_achievements
                     .into_iter()
                     .map(|achievement| (achievement.id, achievement.to_owned()))
                     .collect::<BTreeMap<usize, Achievement>>();
                 self.update_filter()
             }
-            ViewEvent::UpdateAccountAchievements(all_account_achievements) => {
+            Event::AccountAchievementsLoaded(all_account_achievements) => {
                 self.account_achievements = all_account_achievements
                     .0
                     .iter()

@@ -15,7 +15,6 @@ mod ui;
 use std::{fmt::Debug, rc::Rc, sync::Arc};
 
 use ::log::debug;
-use events::ViewEvent;
 use signal_hook::consts::{SIGINT, SIGQUIT, SIGTERM};
 use signal_hook_tokio::Signals;
 use state::AppState;
@@ -25,7 +24,7 @@ use crate::{
     cli::{config_path, Options},
     client::CachedClient,
     config::Config,
-    events::{Event, EventLoop, StateEvent},
+    events::Event,
     fetch::Fetch,
     log::setup_logger,
     signals::handle_signals,
@@ -65,34 +64,22 @@ pub async fn main() -> Result {
     debug!("{:?}", config);
 
     let (tx_event, rx_event) = mpsc::unbounded_channel::<Event>();
-    let (tx_view_event, rx_view_event) = mpsc::unbounded_channel::<ViewEvent>();
 
     let app_state = Rc::new(AppState::load("state.json"));
-    let _ = tx_event.send(Event::State(StateEvent::LoadTracks(
-        app_state.tracked_items(),
-    )));
 
     let client = Arc::new(CachedClient::new(config).map_err(Error::Client)?);
 
-    let event_loop = EventLoop::new(
-        app_state.clone(),
-        tx_event.clone(),
-        rx_event,
-        tx_view_event.clone(),
-    );
     let fetch = Fetch::new(client, tx_event.clone());
     let ui = UI::new(
         app_state.clone(),
         tx_event.clone(),
-        tx_view_event.clone(),
-        rx_view_event,
+        rx_event,
     );
 
     let signals = Signals::new(&[SIGTERM, SIGINT, SIGQUIT]).map_err(Error::Signal)?;
 
     select! {
         _ = handle_signals(signals, tx_event) => {}
-        _ = event_loop.run() => {}
         _ = fetch.run(60) => {}
         _ = ui.run() => {}
     }

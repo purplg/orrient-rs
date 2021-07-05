@@ -11,7 +11,7 @@ use tui::{
 
 use crate::{
     api::{Achievement, Dailies, Daily},
-    events::ViewEvent,
+    events::Event,
     input::InputEvent,
 };
 
@@ -87,15 +87,15 @@ impl View for DailiesView {
         false
     }
 
-    fn handle_view_event(&mut self, view_event: &ViewEvent) {
-        match view_event {
-            ViewEvent::UpdateAchievements(all_achievements) => {
+    fn handle_event(&mut self, event: &Event) {
+        match event {
+            Event::AchievementsLoaded(all_achievements) => {
                 self.achievements = all_achievements
                     .into_iter()
                     .map(|achievement| (achievement.id, achievement.to_owned()))
                     .collect()
             }
-            ViewEvent::UpdateDailies(dailies) => {
+            Event::FetchedDailies(dailies) => {
                 self.dailies = Some(dailies.to_owned());
             }
             _ => {}
