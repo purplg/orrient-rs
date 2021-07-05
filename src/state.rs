@@ -28,13 +28,6 @@ impl AppState {
         }
     }
 
-    pub fn add_track(&self, track: Track) {
-        if let Ok(mut tracks) = self.tracks.write() {
-            tracks.insert(track);
-        }
-        let _ = self.write();
-    }
-
     pub fn toggle_track(&self, track: Track) {
         if let Ok(mut tracks) = self.tracks.write() {
             if !tracks.remove(&track) {
