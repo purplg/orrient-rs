@@ -11,7 +11,6 @@ use std::{
 };
 
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
-use log::debug;
 use tokio::{
     select,
     sync::mpsc::{self, UnboundedReceiver, UnboundedSender},
