@@ -70,11 +70,7 @@ pub async fn main() -> Result {
     let client = Arc::new(CachedClient::new(config).map_err(Error::Client)?);
 
     let fetch = Fetch::new(client, tx_event.clone());
-    let ui = UI::new(
-        app_state.clone(),
-        tx_event.clone(),
-        rx_event,
-    );
+    let ui = UI::new(app_state.clone(), tx_event.clone(), rx_event);
 
     let signals = Signals::new(&[SIGTERM, SIGINT, SIGQUIT]).map_err(Error::Signal)?;
 

@@ -130,7 +130,7 @@ impl UI {
         match &event {
             Event::Quit => self.quit = true,
             Event::ToggleTrack(track) => self.app_state.toggle_track(track),
-            _ => {},
+            _ => {}
         }
         self.status_view.handle_event(&event);
         self.tracks_view.handle_event(&event);

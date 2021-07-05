@@ -54,12 +54,10 @@ impl Fetch {
                     for achievement in achievement_page {
                         all_achievements.insert(achievement);
                     }
-                    let _ = self
-                        .tx_state
-                        .send(Event::StatusMessage(format!(
-                            "Loading achievements... {}%",
-                            (progress * 100.0) as u64
-                        )));
+                    let _ = self.tx_state.send(Event::StatusMessage(format!(
+                        "Loading achievements... {}%",
+                        (progress * 100.0) as u64
+                    )));
                 }
                 Err(err) => {
                     debug!("Error fetching Achievements: {:?}", err);
@@ -102,9 +100,7 @@ impl Fetch {
     async fn fetch_dailies(&self) {
         match self.client.request::<Dailies>().await {
             Ok(dailies) => {
-                let _ = self
-                    .tx_state
-                    .send(Event::FetchedDailies(dailies));
+                let _ = self.tx_state.send(Event::FetchedDailies(dailies));
             }
             Err(err) => debug!("Error fetching Dailies: {:?}", err),
         }
