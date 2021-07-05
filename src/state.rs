@@ -28,10 +28,10 @@ impl AppState {
         }
     }
 
-    pub fn toggle_track(&self, track: Track) {
+    pub fn toggle_track(&self, track: &Track) {
         if let Ok(mut tracks) = self.tracks.write() {
-            if !tracks.remove(&track) {
-                tracks.insert(track);
+            if !tracks.remove(track) {
+                tracks.insert(track.clone());
             }
         }
         let _ = self.write();

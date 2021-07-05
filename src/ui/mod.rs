@@ -129,7 +129,7 @@ impl UI {
     pub fn handle_event(&mut self, event: Event) {
         match &event {
             Event::Quit => self.quit = true,
-            Event::ToggleTrack(track) => self.app_state.toggle_track(track.clone()),
+            Event::ToggleTrack(track) => self.app_state.toggle_track(track),
             _ => {},
         }
         self.status_view.handle_event(&event);
