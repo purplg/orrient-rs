@@ -128,15 +128,10 @@ impl UI {
     }
 
     pub fn handle_event(&mut self, event: Event) {
-        debug!("{:?}", event);
         match &event {
             Event::Quit => self.quit = true,
             Event::ToggleTrack(track) => self.app_state.toggle_track(track.clone()),
-            Event::AddTrack(_) => {},
-            Event::AccountAchievementsLoaded(_) => {},
-            Event::AchievementsLoaded(_) => {},
-            Event::FetchedDailies(_) => {},
-            Event::StatusMessage(_) => {},
+            _ => {},
         }
         self.status_view.handle_event(&event);
         self.tracks_view.handle_event(&event);
