@@ -1,12 +1,18 @@
 use std::{collections::HashSet, fs::File, io::BufWriter, path::PathBuf, sync::RwLock};
 
-use crate::tracks::{Track, Tracks};
+use log::debug;
+
+use crate::{
+    bookmarks::{Bookmark, Bookmarks},
+    tracks::{Track, Tracks},
+};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct AppState {
     #[serde(skip)]
     path: PathBuf,
     tracks: RwLock<Tracks>,
+    bookmarks: RwLock<Bookmarks>,
 }
 
 impl AppState {
@@ -14,6 +20,7 @@ impl AppState {
         Self {
             path,
             tracks: RwLock::new(Tracks::default()),
+            bookmarks: RwLock::new(Bookmarks::default()),
         }
     }
 
@@ -21,10 +28,46 @@ impl AppState {
         let path = PathBuf::from(path);
         match File::open(&path) {
             Ok(file) => match serde_json::from_reader(&file) {
-                Ok(state) => state,
-                Err(_) => Self::new(path),
+                Ok(state) => {
+                    let mut state: AppState = state;
+                    state.path = path;
+                    state
+                }
+                Err(err) => {
+                    debug!("Error parsing state file: {}", err);
+                    Self::new(path)
+                }
             },
-            Err(_) => Self::new(path),
+            Err(err) => {
+                debug!("Error opening state file: {}", err);
+                Self::new(path)
+            }
+        }
+    }
+
+    pub fn add_bookmark(&self, bookmark: Bookmark) {
+        if let Ok(mut bookmarks) = self.bookmarks.write() {
+            bookmarks.insert(bookmark);
+        }
+        if let Err(err) = self.write() {
+            debug!("Error writing state file: {}", err)
+        }
+    }
+
+    pub fn remove_bookmark(&self, bookmark: Bookmark) {
+        if let Ok(mut bookmarks) = self.bookmarks.write() {
+            bookmarks.remove(&bookmark);
+        }
+        if let Err(err) = self.write() {
+            debug!("Error writing state file: {}", err)
+        }
+    }
+
+    pub fn bookmarks(&self) -> HashSet<Bookmark> {
+        if let Ok(bookmarks) = self.bookmarks.read() {
+            bookmarks.items().clone()
+        } else {
+            HashSet::default()
         }
     }
 
@@ -34,7 +77,9 @@ impl AppState {
                 tracks.insert(track.clone());
             }
         }
-        let _ = self.write();
+        if let Err(err) = self.write() {
+            debug!("Error writing state file: {}", err)
+        }
     }
 
     pub fn tracked_items(&self) -> HashSet<Track> {

@@ -1,5 +1,6 @@
 // A view is a collection of components or widgets to display to the terminal buffer
 pub mod achievements;
+pub mod bookmarks;
 pub mod dailies;
 pub mod status;
 pub mod timer;

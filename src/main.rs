@@ -1,4 +1,5 @@
 mod api;
+mod bookmarks;
 mod cache;
 mod cli;
 mod client;

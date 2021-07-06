@@ -14,6 +14,7 @@ pub enum InputKind {
     Top,
     Bottom,
     Confirm,
+    Delete,
     Select,
     Back,
     Quit,
@@ -23,6 +24,7 @@ pub enum InputKind {
     Unhandled,
 }
 
+#[derive(Debug)]
 pub struct InputEvent {
     pub input: InputKind,
     pub key_code: Option<KeyCode>,
@@ -65,12 +67,14 @@ impl Input {
                 KeyCode::Enter => InputKind::Confirm,
                 KeyCode::Char(' ') => InputKind::Select,
                 KeyCode::Char('n') => InputKind::New,
+                KeyCode::Char('x') => InputKind::Delete,
                 KeyCode::Char('q') => InputKind::Quit,
                 KeyCode::Char('/') => InputKind::Search,
                 KeyCode::Char('1') => InputKind::SwitchTab(0),
                 KeyCode::Char('2') => InputKind::SwitchTab(1),
                 KeyCode::Char('3') => InputKind::SwitchTab(2),
                 KeyCode::Char('4') => InputKind::SwitchTab(3),
+                KeyCode::Char('5') => InputKind::SwitchTab(4),
                 _ => InputKind::Unhandled,
             };
 

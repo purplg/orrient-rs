@@ -31,8 +31,8 @@ use crate::{
 };
 
 use self::view::{
-    achievements::AchievementsView, dailies::DailiesView, status::StatusView, timer::TimerView,
-    tracks::TracksView, View,
+    achievements::AchievementsView, bookmarks::BookmarksView, dailies::DailiesView,
+    status::StatusView, timer::TimerView, tracks::TracksView, View,
 };
 
 pub struct UI {
@@ -43,6 +43,7 @@ pub struct UI {
     achievements_view: AchievementsView,
     dailies_view: DailiesView,
     timer_view: TimerView,
+    bookmarks_view: BookmarksView,
     quit: bool,
     current_tab: usize,
 }
@@ -55,9 +56,10 @@ impl UI {
     ) -> Self {
         let achievements_view = AchievementsView::new(app_state.clone(), tx_event.clone());
         let tracks_view = TracksView::new(app_state.clone(), tx_event.clone());
-        let status_view = StatusView::new(tx_event);
+        let status_view = StatusView::new(tx_event.clone());
         let dailies_view = DailiesView::new();
         let timer_view = TimerView::new();
+        let bookmarks_view = BookmarksView::new(app_state.clone(), tx_event);
 
         Self {
             app_state,
@@ -67,6 +69,7 @@ impl UI {
             status_view,
             dailies_view,
             timer_view,
+            bookmarks_view,
             quit: false,
             current_tab: 0, // TODO populate default from config
         }
@@ -115,6 +118,7 @@ impl UI {
             1 => self.achievements_view.handle_input_event(&input_event),
             2 => self.dailies_view.handle_input_event(&input_event),
             3 => self.timer_view.handle_input_event(&input_event),
+            4 => self.bookmarks_view.handle_input_event(&input_event),
             _ => false,
         } {
             // If view doesn't consume input, handle it locally
@@ -145,6 +149,7 @@ impl UI {
             Spans::from("Achievements"),
             Spans::from("Dailies"),
             Spans::from("Timers"),
+            Spans::from("Bookmarks"),
         ])
         .block(Block::default().borders(Borders::BOTTOM | Borders::TOP))
         .highlight_style(
@@ -174,6 +179,7 @@ impl UI {
                 1 => self.achievements_view.draw(frame, chunks[1]),
                 2 => self.dailies_view.draw(frame, chunks[1]),
                 3 => self.timer_view.draw(frame, chunks[1]),
+                4 => self.bookmarks_view.draw(frame, chunks[1]),
                 _ => {}
             }
 
