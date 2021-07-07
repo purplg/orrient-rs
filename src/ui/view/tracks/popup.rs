@@ -1,6 +1,6 @@
-use std::iter;
+use std::{cell::Cell, iter};
 
-use crossterm::event::KeyCode;
+use tokio::sync::mpsc::UnboundedSender;
 use tui::{
     layout::{Constraint, Direction, Layout, Margin, Rect},
     style::{Modifier, Style},
@@ -9,6 +9,7 @@ use tui::{
 };
 
 use crate::{
+    events::Event,
     input::{InputEvent, InputKind},
     tracks::Track,
     ui::widget::{
@@ -22,35 +23,45 @@ pub struct CustomTrackPopupState {
     textbox_state: TextboxState,
     checkbox_state: CheckboxState,
     list_state: ListState,
+    active: Cell<bool>,
+    tx_event: UnboundedSender<Event>,
 }
 
-impl Default for CustomTrackPopupState {
-    fn default() -> Self {
+impl CustomTrackPopupState {
+    pub fn new(tx_event: UnboundedSender<Event>) -> Self {
         let mut popup = Self {
             textbox_state: TextboxState::default(),
             checkbox_state: CheckboxState::default(),
             list_state: ListState::default(),
+            active: Cell::new(false),
+            tx_event,
         };
         popup.list_state.select(Some(0));
         popup
     }
-}
 
-impl CustomTrackPopupState {
-    pub fn cancel(&mut self) {
+    pub fn active(&self, active: bool) {
+        self.active.set(active);
+    }
+
+    fn reset(&mut self) {
         self.textbox_state = TextboxState::default();
         self.checkbox_state = CheckboxState::default();
         self.list_state = ListState::default();
         self.list_state.select(Some(0));
     }
 
-    pub fn finish(&mut self) -> Track {
+    fn finish(&mut self) -> Track {
         let track = Track::Custom(self.textbox_state.take());
-        self.cancel();
+        self.reset();
         track
     }
 
     pub fn draw<B: tui::backend::Backend>(&mut self, frame: &mut Frame<B>, area: Rect) {
+        if !self.active.get() {
+            return;
+        }
+
         let (width, height) = (50, 10);
         if area.width < width || area.height < height {
             return;
@@ -108,64 +119,41 @@ impl CustomTrackPopupState {
     }
 
     pub fn handle_input(&mut self, event: &InputEvent) -> bool {
+        if !self.active.get() {
+            return false;
+        }
+
         if match self.list_state.selected() {
-            Some(0) => self.handle_input_textbox(event),
+            Some(0) => self.textbox_state.handle_input(event),
             Some(1) => self.handle_input_checkbox(event),
             _ => false,
         } {
             return true;
         }
-        self.handle_input_cursor(event)
-    }
-
-    fn handle_input_textbox(&mut self, event: &InputEvent) -> bool {
-        if let Some(key_code) = event.key_code {
-            match key_code {
-                KeyCode::Char(letter) => {
-                    self.textbox_state.insert_character(letter);
-                    return true;
-                }
-                KeyCode::Backspace => {
-                    self.textbox_state.remove_character();
-                    return true;
-                }
-                _ => {}
-            }
-        }
 
         match event.input {
-            InputKind::MoveLeft(amount) => {
-                self.textbox_state.move_cursor(CursorMovement::Left(amount));
-                return true;
-            }
-            InputKind::MoveRight(amount) => {
-                self.textbox_state
-                    .move_cursor(CursorMovement::Right(amount));
-                return true;
-            }
-            _ => {}
-        }
-        false
-    }
-
-    fn handle_input_checkbox(&mut self, event: &InputEvent) -> bool {
-        match event.input {
-            InputKind::Select => {
-                self.checkbox_state.toggle();
+            InputKind::Confirm => {
+                self.active(false);
+                let track = self.finish();
+                let _ = self.tx_event.send(Event::AddTrack(track));
                 true
             }
-            _ => false,
-        }
-    }
-
-    fn handle_input_cursor(&mut self, event: &InputEvent) -> bool {
-        match event.input {
             InputKind::MoveUp(amount) => {
                 self.list_state.move_cursor(2, CursorMovement::Up(amount));
                 true
             }
             InputKind::MoveDown(amount) => {
                 self.list_state.move_cursor(2, CursorMovement::Down(amount));
+                true
+            }
+            _ => false,
+        }
+    }
+
+    fn handle_input_checkbox(&mut self, event: &InputEvent) -> bool {
+        match event.input {
+            InputKind::Select => {
+                self.checkbox_state.toggle();
                 true
             }
             _ => false,

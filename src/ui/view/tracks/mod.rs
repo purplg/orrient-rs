@@ -39,7 +39,6 @@ pub struct TracksView {
     account_achievements: HashMap<usize, AccountAchievement>,
     tracks: Vec<Track>,
     add_track_popup: CustomTrackPopupState,
-    inserting: bool,
 }
 
 impl TracksView {
@@ -47,6 +46,7 @@ impl TracksView {
         let tracks: Vec<Track> = app_state.tracked_items().into_iter().collect();
         let mut list_state = ListState::default();
         list_state.move_cursor(tracks.len(), CursorMovement::None);
+        let add_track_popup = CustomTrackPopupState::new(tx_state.clone());
         TracksView {
             app_state,
             tx_state,
@@ -55,8 +55,7 @@ impl TracksView {
             achievements: HashMap::default(),
             account_achievements: HashMap::default(),
             tracks,
-            add_track_popup: CustomTrackPopupState::default(),
-            inserting: false,
+            add_track_popup,
         }
     }
 
@@ -192,57 +191,40 @@ impl View for TracksView {
             }
         }
 
-        if self.inserting {
-            self.add_track_popup.draw(frame, area);
-        }
+        self.add_track_popup.draw(frame, area);
     }
 
     fn handle_input_event(&mut self, event: &InputEvent) -> bool {
-        if !self.inserting || !self.add_track_popup.handle_input(event) {
-            match event.input {
-                InputKind::MoveUp(amount) => {
-                    self.list_state.move_cursor(
-                        self.app_state.tracked_items().len(),
-                        CursorMovement::Up(amount),
-                    );
-                    true
-                }
-                InputKind::MoveDown(amount) => {
-                    self.list_state.move_cursor(
-                        self.app_state.tracked_items().len(),
-                        CursorMovement::Down(amount),
-                    );
-                    true
-                }
-                InputKind::Select => {
-                    if let Some(track) = self.selected_track() {
-                        let _ = self.tx_state.send(Event::ToggleTrack(track));
-                    }
-                    true
-                }
-                InputKind::New => {
-                    self.inserting = true;
-                    true
-                }
-                InputKind::Back => {
-                    if self.inserting {
-                        self.inserting = false;
-                        self.add_track_popup.cancel();
-                    }
-                    true
-                }
-                InputKind::Confirm => {
-                    if self.inserting {
-                        self.inserting = false;
-                        let track = self.add_track_popup.finish();
-                        let _ = self.tx_state.send(Event::AddTrack(track));
-                    }
-                    true
-                }
-                _ => false,
+        if self.add_track_popup.handle_input(event) {
+            return true;
+        }
+
+        match event.input {
+            InputKind::MoveUp(amount) => {
+                self.list_state.move_cursor(
+                    self.app_state.tracked_items().len(),
+                    CursorMovement::Up(amount),
+                );
+                true
             }
-        } else {
-            false
+            InputKind::MoveDown(amount) => {
+                self.list_state.move_cursor(
+                    self.app_state.tracked_items().len(),
+                    CursorMovement::Down(amount),
+                );
+                true
+            }
+            InputKind::Select => {
+                if let Some(track) = self.selected_track() {
+                    let _ = self.tx_state.send(Event::ToggleTrack(track));
+                }
+                true
+            }
+            InputKind::New => {
+                self.add_track_popup.active(true);
+                true
+            }
+            _ => false,
         }
     }
 
