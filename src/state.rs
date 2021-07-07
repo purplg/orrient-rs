@@ -105,8 +105,9 @@ impl AppState {
 
     fn try_write(&self) {
         if self.invalidated.get() {
-            if let Err(err) = self.write() {
-                debug!("Error writing state file: {}", err);
+            match self.write() {
+                Ok(_) => self.invalidated.set(false),
+                Err(err) => debug!("Error writing state file: {}", err),
             }
         }
     }
