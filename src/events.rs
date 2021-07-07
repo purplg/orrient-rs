@@ -2,6 +2,7 @@ use std::collections::HashSet;
 
 use crate::{
     api::{Achievement, AllAccountAchievements, Dailies},
+    bookmarks::Bookmark,
     tracks::Track,
 };
 
@@ -9,6 +10,7 @@ use crate::{
 pub enum Event {
     Quit,
     AddTrack(Track),
+    AddBookmark(Bookmark),
     ToggleTrack(Track),
     AccountAchievementsLoaded(AllAccountAchievements),
     AchievementsLoaded(HashSet<Achievement>),

@@ -1,6 +1,7 @@
-use std::iter;
+use std::{cell::Cell, iter};
 
 use crossterm::event::KeyCode;
+use tokio::sync::mpsc::UnboundedSender;
 use tui::{
     layout::{Constraint, Direction, Layout, Margin, Rect},
     style::{Modifier, Style},
@@ -10,6 +11,7 @@ use tui::{
 
 use crate::{
     bookmarks::Bookmark,
+    events::Event,
     input::{InputEvent, InputKind},
     ui::widget::{
         list_selection::{CursorMovement, ListSelection},
@@ -21,39 +23,49 @@ pub struct CustomBookmarkPopupState {
     name_textbox_state: TextboxState,
     link_textbox_state: TextboxState,
     list_state: ListState,
+    active: Cell<bool>,
+    tx_event: UnboundedSender<Event>,
 }
 
-impl Default for CustomBookmarkPopupState {
-    fn default() -> Self {
+impl CustomBookmarkPopupState {
+    pub fn new(tx_event: UnboundedSender<Event>) -> Self {
         let mut popup = Self {
             name_textbox_state: TextboxState::default(),
             link_textbox_state: TextboxState::default(),
             list_state: ListState::default(),
+            active: Cell::new(false),
+            tx_event,
         };
         popup.list_state.select(Some(0));
         popup
     }
-}
 
-impl CustomBookmarkPopupState {
-    pub fn cancel(&mut self) {
+    pub fn active(&self, active: bool) {
+        self.active.set(active);
+    }
+
+    fn reset(&mut self) {
         self.name_textbox_state = TextboxState::default();
         self.link_textbox_state = TextboxState::default();
         self.list_state = ListState::default();
         self.list_state.select(Some(0));
     }
 
-    pub fn finish(&mut self) -> Bookmark {
+    fn finish(&mut self) -> Bookmark {
         let bookmark = Bookmark {
             kind: crate::bookmarks::BookmarkKind::Waypoint,
             name: self.name_textbox_state.take(),
             link: self.link_textbox_state.take(),
         };
-        self.cancel();
+        self.reset();
         bookmark
     }
 
     pub fn draw<B: tui::backend::Backend>(&mut self, frame: &mut Frame<B>, area: Rect) {
+        if !self.active.get() {
+            return;
+        }
+
         let (width, height) = (50, 10);
         if area.width < width || area.height < height {
             return;
@@ -120,6 +132,10 @@ impl CustomBookmarkPopupState {
     }
 
     pub fn handle_input(&mut self, event: &InputEvent) -> bool {
+        if !self.active.get() {
+            return false;
+        }
+
         if match self.list_state.selected() {
             Some(0) => self.handle_input_name_textbox(event),
             Some(1) => self.handle_input_link_textbox(event),
@@ -127,7 +143,28 @@ impl CustomBookmarkPopupState {
         } {
             return true;
         }
-        self.handle_input_cursor(event)
+
+        match event.input {
+            InputKind::Back => {
+                self.active(false);
+                true
+            }
+            InputKind::Confirm => {
+                self.active(false);
+                let bookmark = self.finish();
+                let _ = self.tx_event.send(Event::AddBookmark(bookmark));
+                true
+            }
+            InputKind::MoveUp(amount) => {
+                self.list_state.move_cursor(2, CursorMovement::Up(amount));
+                true
+            }
+            InputKind::MoveDown(amount) => {
+                self.list_state.move_cursor(2, CursorMovement::Down(amount));
+                true
+            }
+            _ => false,
+        }
     }
 
     fn handle_input_name_textbox(&mut self, event: &InputEvent) -> bool {
@@ -190,19 +227,5 @@ impl CustomBookmarkPopupState {
             _ => {}
         }
         false
-    }
-
-    fn handle_input_cursor(&mut self, event: &InputEvent) -> bool {
-        match event.input {
-            InputKind::MoveUp(amount) => {
-                self.list_state.move_cursor(2, CursorMovement::Up(amount));
-                true
-            }
-            InputKind::MoveDown(amount) => {
-                self.list_state.move_cursor(2, CursorMovement::Down(amount));
-                true
-            }
-            _ => false,
-        }
     }
 }

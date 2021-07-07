@@ -141,6 +141,7 @@ impl UI {
         self.achievements_view.handle_event(&event);
         self.dailies_view.handle_event(&event);
         self.timer_view.handle_event(&event);
+        self.bookmarks_view.handle_event(&event);
     }
 
     fn render(&mut self, terminal: &mut Terminal<CrosstermBackend<Stdout>>) {
