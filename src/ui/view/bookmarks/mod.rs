@@ -121,7 +121,6 @@ impl View for BookmarksView {
     fn handle_event(&mut self, event: &Event) {
         match event {
             Event::AddBookmark(bookmark) => {
-                debug!("adding bookmark: {:?}", bookmark);
                 self.bookmarks.push(bookmark.clone());
                 self.app_state.add_bookmark(bookmark.clone());
             }
