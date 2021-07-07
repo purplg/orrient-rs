@@ -1,4 +1,4 @@
-use std::{iter, ops::Sub};
+use std::{io::Stdout, iter, ops::Sub};
 
 use chrono::{Duration, Timelike, Utc};
 use gw2timers::{
@@ -7,6 +7,7 @@ use gw2timers::{
     meta::{MapMeta, MapMetaKind},
 };
 use tui::{
+    backend::CrosstermBackend,
     layout::{Constraint, Rect},
     style::{Color, Modifier, Style},
     widgets::{Cell, Row, Table},
@@ -103,7 +104,11 @@ impl TimerView {
 }
 
 impl View for TimerView {
-    fn draw<B: tui::backend::Backend>(&mut self, frame: &mut Frame<B>, area: Rect) {
+    fn name(&self) -> &'static str {
+        "Timers"
+    }
+
+    fn draw(&mut self, frame: &mut Frame<CrosstermBackend<Stdout>>, area: Rect) {
         let num_events = area.width / self.event_width;
         let event_area_width = area.width - self.heading_width;
         let mut constaints = iter::repeat(Constraint::Length(event_area_width / num_events))

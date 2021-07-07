@@ -10,7 +10,7 @@ use crate::{
         widget::list_selection::CursorMovement,
     },
 };
-use std::{collections::HashMap, rc::Rc};
+use std::{collections::HashMap, io::Stdout, rc::Rc};
 
 use crate::{
     api::{AccountAchievement, Achievement},
@@ -23,6 +23,7 @@ use crate::{
 use tokio::sync::mpsc::UnboundedSender;
 
 use tui::{
+    backend::CrosstermBackend,
     layout::{Constraint, Direction, Layout, Rect},
     widgets::{Block, Borders, List, ListItem, ListState},
     Frame,
@@ -176,7 +177,11 @@ impl TracksView {
 }
 
 impl View for TracksView {
-    fn draw<B: tui::backend::Backend>(&mut self, frame: &mut Frame<B>, area: Rect) {
+    fn name(&self) -> &'static str {
+        "Tracks"
+    }
+
+    fn draw(&mut self, frame: &mut Frame<CrosstermBackend<Stdout>>, area: Rect) {
         let h_chunks: Vec<Rect> = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([Constraint::Min(50), Constraint::Percentage(100)])

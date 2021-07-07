@@ -1,11 +1,12 @@
 mod popup;
 
-use std::rc::Rc;
+use std::{io::Stdout, rc::Rc};
 
 use copypasta::{ClipboardContext, ClipboardProvider};
 use log::debug;
 use tokio::sync::mpsc::UnboundedSender;
 use tui::{
+    backend::CrosstermBackend,
     layout::Rect,
     widgets::{List, ListItem, ListState},
     Frame,
@@ -58,7 +59,11 @@ impl BookmarksView {
 }
 
 impl View for BookmarksView {
-    fn draw<B: tui::backend::Backend>(&mut self, frame: &mut Frame<B>, area: Rect) {
+    fn name(&self) -> &'static str {
+        "Bookmarks"
+    }
+
+    fn draw(&mut self, frame: &mut Frame<CrosstermBackend<Stdout>>, area: Rect) {
         let list = List::new(
             self.bookmarks
                 .iter()

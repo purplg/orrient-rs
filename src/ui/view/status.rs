@@ -1,9 +1,10 @@
-use std::time::Duration;
+use std::{io::Stdout, time::Duration};
 
 use crate::{events::Event, input::InputEvent};
 use futures::FutureExt;
 use tokio::{sync::mpsc::UnboundedSender, task::JoinHandle};
 use tui::{
+    backend::CrosstermBackend,
     layout::Rect,
     widgets::{Block, Borders, Paragraph},
     Frame,
@@ -37,7 +38,11 @@ impl StatusView {
 }
 
 impl View for StatusView {
-    fn draw<B: tui::backend::Backend>(&mut self, frame: &mut Frame<B>, area: Rect) {
+    fn name(&self) -> &'static str {
+        "Status"
+    }
+
+    fn draw(&mut self, frame: &mut Frame<CrosstermBackend<Stdout>>, area: Rect) {
         frame.render_widget(
             Paragraph::new(self.message.as_str()).block(Block::default().borders(Borders::TOP)),
             area,

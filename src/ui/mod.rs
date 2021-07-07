@@ -38,12 +38,9 @@ use self::view::{
 pub struct UI {
     app_state: Rc<AppState>,
     rx_event: UnboundedReceiver<Event>,
+    tabs: Vec<Box<dyn View>>,
+    tab_names: Vec<&'static str>,
     status_view: StatusView,
-    tracks_view: TracksView,
-    achievements_view: AchievementsView,
-    dailies_view: DailiesView,
-    timer_view: TimerView,
-    bookmarks_view: BookmarksView,
     quit: bool,
     current_tab: usize,
 }
@@ -54,22 +51,23 @@ impl UI {
         tx_event: UnboundedSender<Event>,
         rx_event: UnboundedReceiver<Event>,
     ) -> Self {
-        let achievements_view = AchievementsView::new(app_state.clone(), tx_event.clone());
-        let tracks_view = TracksView::new(app_state.clone(), tx_event.clone());
-        let status_view = StatusView::new(tx_event.clone());
-        let dailies_view = DailiesView::new();
-        let timer_view = TimerView::new();
-        let bookmarks_view = BookmarksView::new(app_state.clone(), tx_event);
+        let tabs = vec![
+            Box::new(TracksView::new(app_state.clone(), tx_event.clone())) as Box<dyn View>,
+            Box::new(AchievementsView::new(app_state.clone(), tx_event.clone())),
+            Box::new(DailiesView::new()),
+            Box::new(TimerView::new()),
+            Box::new(BookmarksView::new(app_state.clone(), tx_event.clone())),
+        ];
+        let tab_names = tabs.iter().map(|tab| tab.name()).collect::<Vec<_>>();
+
+        let status_view = StatusView::new(tx_event);
 
         Self {
             app_state,
             rx_event,
-            achievements_view,
-            tracks_view,
+            tabs,
+            tab_names,
             status_view,
-            dailies_view,
-            timer_view,
-            bookmarks_view,
             quit: false,
             current_tab: 0, // TODO populate default from config
         }
@@ -111,20 +109,23 @@ impl UI {
         Ok(())
     }
 
+    fn select_tab(&mut self, tab_index: usize) {
+        if tab_index < self.tabs.len() {
+            self.current_tab = tab_index;
+        }
+    }
+
     pub fn handle_input_event(&mut self, input_event: InputEvent) {
         // Pass input events to current view
-        if !match self.current_tab {
-            0 => self.tracks_view.handle_input_event(&input_event),
-            1 => self.achievements_view.handle_input_event(&input_event),
-            2 => self.dailies_view.handle_input_event(&input_event),
-            3 => self.timer_view.handle_input_event(&input_event),
-            4 => self.bookmarks_view.handle_input_event(&input_event),
-            _ => false,
-        } {
-            // If view doesn't consume input, handle it locally
+        if !self
+            .tabs
+            .get_mut(self.current_tab)
+            .map_or(false, |tab| tab.handle_input_event(&input_event))
+        {
+            // If view doesn't handle input, handle it locally
             match input_event.input {
                 InputKind::Quit => self.quit = true,
-                InputKind::SwitchTab(tab_index) => self.current_tab = tab_index,
+                InputKind::SwitchTab(tab_index) => self.select_tab(tab_index),
                 _ => {}
             }
         }
@@ -137,29 +138,21 @@ impl UI {
             _ => {}
         }
         self.status_view.handle_event(&event);
-        self.tracks_view.handle_event(&event);
-        self.achievements_view.handle_event(&event);
-        self.dailies_view.handle_event(&event);
-        self.timer_view.handle_event(&event);
-        self.bookmarks_view.handle_event(&event);
+        for tab in self.tabs.iter_mut() {
+            tab.handle_event(&event);
+        }
     }
 
     fn render(&mut self, terminal: &mut Terminal<CrosstermBackend<Stdout>>) {
-        let tabs = Tabs::new(vec![
-            Spans::from("Tracks"),
-            Spans::from("Achievements"),
-            Spans::from("Dailies"),
-            Spans::from("Timers"),
-            Spans::from("Bookmarks"),
-        ])
-        .block(Block::default().borders(Borders::BOTTOM | Borders::TOP))
-        .highlight_style(
-            Style::default()
-                .add_modifier(Modifier::BOLD)
-                .fg(Color::White),
-        )
-        .style(Style::default().fg(Color::DarkGray))
-        .select(self.current_tab);
+        let tabs = Tabs::new(self.tab_names.iter().map(|s| Spans::from(*s)).collect())
+            .block(Block::default().borders(Borders::BOTTOM | Borders::TOP))
+            .highlight_style(
+                Style::default()
+                    .add_modifier(Modifier::BOLD)
+                    .fg(Color::White),
+            )
+            .style(Style::default().fg(Color::DarkGray))
+            .select(self.current_tab);
 
         let _ = terminal.draw(|frame| {
             let chunks = Layout::default()
@@ -174,14 +167,9 @@ impl UI {
             // Draw tabs
             frame.render_widget(tabs, chunks[0]);
 
-            // Draw main center panel
-            match self.current_tab {
-                0 => self.tracks_view.draw(frame, chunks[1]),
-                1 => self.achievements_view.draw(frame, chunks[1]),
-                2 => self.dailies_view.draw(frame, chunks[1]),
-                3 => self.timer_view.draw(frame, chunks[1]),
-                4 => self.bookmarks_view.draw(frame, chunks[1]),
-                _ => {}
+            // Draw current tab
+            if let Some(tab) = self.tabs.get_mut(self.current_tab) {
+                tab.draw(frame, chunks[1]);
             }
 
             // Draw bottom status bar

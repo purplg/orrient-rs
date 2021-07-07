@@ -7,11 +7,13 @@ use crate::{
 };
 use std::{
     collections::{BTreeMap, HashMap},
+    io::Stdout,
     rc::Rc,
 };
 
 use tokio::sync::mpsc::UnboundedSender;
 use tui::{
+    backend::CrosstermBackend,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::Text,
@@ -134,7 +136,11 @@ impl AchievementsView {
 }
 
 impl View for AchievementsView {
-    fn draw<B: tui::backend::Backend>(&mut self, frame: &mut Frame<B>, area: Rect) {
+    fn name(&self) -> &'static str {
+        "Achievements"
+    }
+
+    fn draw(&mut self, frame: &mut Frame<CrosstermBackend<Stdout>>, area: Rect) {
         // LAYOUTS
         let horiz_layout = Layout::default()
             .direction(Direction::Horizontal)

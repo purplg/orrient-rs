@@ -1,7 +1,7 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, io::Stdout};
 
 use tui::{
-    backend::Backend,
+    backend::CrosstermBackend,
     layout::Rect,
     style::{Modifier, Style},
     text::{Span, Spans},
@@ -58,7 +58,11 @@ impl DailiesView {
 }
 
 impl View for DailiesView {
-    fn draw<B: Backend>(&mut self, frame: &mut Frame<B>, area: Rect) {
+    fn name(&self) -> &'static str {
+        "Dailies"
+    }
+
+    fn draw(&mut self, frame: &mut Frame<CrosstermBackend<Stdout>>, area: Rect) {
         if let Some(dailies) = &self.dailies {
             let blank = vec![Spans::default()];
             let pve = self.render_category("PvE".to_string(), &dailies.pve);
