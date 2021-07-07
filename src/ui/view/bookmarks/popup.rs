@@ -1,6 +1,5 @@
 use std::{cell::Cell, iter};
 
-use crossterm::event::KeyCode;
 use tokio::sync::mpsc::UnboundedSender;
 use tui::{
     layout::{Constraint, Direction, Layout, Margin, Rect},
@@ -137,8 +136,8 @@ impl CustomBookmarkPopupState {
         }
 
         if match self.list_state.selected() {
-            Some(0) => self.handle_input_name_textbox(event),
-            Some(1) => self.handle_input_link_textbox(event),
+            Some(0) => self.name_textbox_state.handle_input(event),
+            Some(1) => self.link_textbox_state.handle_input(event),
             _ => false,
         } {
             return true;
@@ -165,67 +164,5 @@ impl CustomBookmarkPopupState {
             }
             _ => false,
         }
-    }
-
-    fn handle_input_name_textbox(&mut self, event: &InputEvent) -> bool {
-        if let Some(key_code) = event.key_code {
-            match key_code {
-                KeyCode::Char(letter) => {
-                    self.name_textbox_state.insert_character(letter);
-                    return true;
-                }
-                KeyCode::Backspace => {
-                    self.name_textbox_state.remove_character();
-                    return true;
-                }
-                _ => {}
-            }
-        }
-
-        match event.input {
-            InputKind::MoveLeft(amount) => {
-                self.name_textbox_state
-                    .move_cursor(CursorMovement::Left(amount));
-                return true;
-            }
-            InputKind::MoveRight(amount) => {
-                self.name_textbox_state
-                    .move_cursor(CursorMovement::Right(amount));
-                return true;
-            }
-            _ => {}
-        }
-        false
-    }
-
-    fn handle_input_link_textbox(&mut self, event: &InputEvent) -> bool {
-        if let Some(key_code) = event.key_code {
-            match key_code {
-                KeyCode::Char(letter) => {
-                    self.link_textbox_state.insert_character(letter);
-                    return true;
-                }
-                KeyCode::Backspace => {
-                    self.link_textbox_state.remove_character();
-                    return true;
-                }
-                _ => {}
-            }
-        }
-
-        match event.input {
-            InputKind::MoveLeft(amount) => {
-                self.link_textbox_state
-                    .move_cursor(CursorMovement::Left(amount));
-                return true;
-            }
-            InputKind::MoveRight(amount) => {
-                self.link_textbox_state
-                    .move_cursor(CursorMovement::Right(amount));
-                return true;
-            }
-            _ => {}
-        }
-        false
     }
 }

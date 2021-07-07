@@ -1,11 +1,14 @@
 use std::{cmp::min, mem};
 
+use crossterm::event::KeyCode;
 use tui::{
     buffer::Buffer,
     layout::Rect,
     style::Style,
     widgets::{Block, StatefulWidget, Widget},
 };
+
+use crate::input::{InputEvent, InputKind};
 
 use super::list_selection::CursorMovement;
 
@@ -116,6 +119,35 @@ impl TextboxState {
             }
             _ => {}
         }
+    }
+
+    pub fn handle_input(&mut self, event: &InputEvent) -> bool {
+        if let Some(key_code) = event.key_code {
+            match key_code {
+                KeyCode::Char(letter) => {
+                    self.insert_character(letter);
+                    return true;
+                }
+                KeyCode::Backspace => {
+                    self.remove_character();
+                    return true;
+                }
+                _ => {}
+            }
+        }
+
+        match event.input {
+            InputKind::MoveLeft(amount) => {
+                self.move_cursor(CursorMovement::Left(amount));
+                return true;
+            }
+            InputKind::MoveRight(amount) => {
+                self.move_cursor(CursorMovement::Right(amount));
+                return true;
+            }
+            _ => {}
+        }
+        false
     }
 
     /// 'Take' and return the content of the textbox leaving it empty

@@ -10,7 +10,6 @@ use std::{
     rc::Rc,
 };
 
-use crossterm::event::KeyCode;
 use tokio::sync::mpsc::UnboundedSender;
 use tui::{
     layout::{Constraint, Direction, Layout, Rect},
@@ -232,20 +231,9 @@ impl View for AchievementsView {
                 _ => {}
             }
 
-            if let Some(key_code) = event.key_code {
-                match key_code {
-                    KeyCode::Char(letter) => {
-                        self.textbox_state.insert_character(letter);
-                        self.update_filter();
-                        return true;
-                    }
-                    KeyCode::Backspace => {
-                        self.textbox_state.remove_character();
-                        self.update_filter();
-                        return true;
-                    }
-                    _ => {}
-                }
+            if self.textbox_state.handle_input(event) {
+                self.update_filter();
+                return true;
             }
         } else {
             match event.input {
