@@ -33,7 +33,7 @@ use super::View;
 
 pub struct TracksView {
     app_state: Rc<AppState>,
-    tx_state: UnboundedSender<Event>,
+    tx_event: UnboundedSender<Event>,
     list_state: ListState,
     tier_progress_bar_height: u16,
     achievements: HashMap<usize, Achievement>,
@@ -43,14 +43,14 @@ pub struct TracksView {
 }
 
 impl TracksView {
-    pub fn new(app_state: Rc<AppState>, tx_state: UnboundedSender<Event>) -> Self {
+    pub fn new(app_state: Rc<AppState>, tx_event: UnboundedSender<Event>) -> Self {
         let tracks: Vec<Track> = app_state.tracked_items().into_iter().collect();
         let mut list_state = ListState::default();
         list_state.move_cursor(tracks.len(), CursorMovement::None);
-        let add_track_popup = CustomTrackPopupState::new(tx_state.clone());
+        let add_track_popup = CustomTrackPopupState::new(tx_event.clone());
         TracksView {
             app_state,
-            tx_state,
+            tx_event,
             list_state,
             tier_progress_bar_height: 1,
             achievements: HashMap::default(),
@@ -221,7 +221,7 @@ impl View for TracksView {
             }
             InputKind::Select => {
                 if let Some(track) = self.selected_track() {
-                    let _ = self.tx_state.send(Event::ToggleTrack(track));
+                    let _ = self.tx_event.send(Event::ToggleTrack(track));
                 }
                 true
             }

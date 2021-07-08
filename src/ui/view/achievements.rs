@@ -45,17 +45,17 @@ pub struct AchievementsView {
     textbox_state: TextboxState,
     achievements: BTreeMap<usize, Achievement>,
     account_achievements: HashMap<usize, AccountAchievement>,
-    tx_state: UnboundedSender<Event>,
+    tx_event: UnboundedSender<Event>,
     visible_list_ids: Vec<usize>,
     searching: bool,
     style: AchievementStatusStyles,
 }
 
 impl AchievementsView {
-    pub fn new(app_state: Rc<AppState>, tx_state: UnboundedSender<Event>) -> Self {
+    pub fn new(app_state: Rc<AppState>, tx_event: UnboundedSender<Event>) -> Self {
         AchievementsView {
             app_state,
-            tx_state,
+            tx_event,
             list_state: ListState::default(),
             textbox_state: TextboxState::default(),
             achievements: BTreeMap::default(),
@@ -276,7 +276,7 @@ impl View for AchievementsView {
                 InputKind::Select => {
                     self.selected_id().map(|id| {
                         self.achievements.get(&id).map(|achievement| {
-                            self.tx_state
+                            self.tx_event
                                 .send(Event::ToggleTrack(Track::Achievement(achievement.id)))
                         })
                     });

@@ -11,15 +11,15 @@ use crate::{
 
 pub struct Fetch {
     client: Arc<CachedClient>,
-    tx_state: UnboundedSender<Event>,
+    tx_event: UnboundedSender<Event>,
     all_achievement_ids: Vec<usize>,
 }
 
 impl Fetch {
-    pub fn new(client: Arc<CachedClient>, tx_state: UnboundedSender<Event>) -> Fetch {
+    pub fn new(client: Arc<CachedClient>, tx_event: UnboundedSender<Event>) -> Fetch {
         Fetch {
             client,
-            tx_state,
+            tx_event,
             all_achievement_ids: Vec::default(),
         }
     }
@@ -54,7 +54,7 @@ impl Fetch {
                     for achievement in achievement_page {
                         all_achievements.insert(achievement);
                     }
-                    let _ = self.tx_state.send(Event::StatusMessage(format!(
+                    let _ = self.tx_event.send(Event::StatusMessage(format!(
                         "Loading achievements... {}%",
                         (progress * 100.0) as u64
                     )));
@@ -65,9 +65,9 @@ impl Fetch {
             }
         }
         let _ = self
-            .tx_state
+            .tx_event
             .send(Event::AchievementsLoaded(all_achievements));
-        let _ = self.tx_state.send(Event::StatusMessage(
+        let _ = self.tx_event.send(Event::StatusMessage(
             "Done loading achievements...".to_string(),
         ));
         self.client.write_cache();
@@ -86,9 +86,9 @@ impl Fetch {
         match self.client.request::<AllAccountAchievements>().await {
             Ok(all_account_achievements) => {
                 let _ = self
-                    .tx_state
+                    .tx_event
                     .send(Event::AccountAchievementsLoaded(all_account_achievements));
-                let _ = self.tx_state.send(Event::StatusMessage(
+                let _ = self.tx_event.send(Event::StatusMessage(
                     "Updated achievement progress".to_string(),
                 ));
             }
@@ -100,7 +100,7 @@ impl Fetch {
     async fn fetch_dailies(&self) {
         match self.client.request::<Dailies>().await {
             Ok(dailies) => {
-                let _ = self.tx_state.send(Event::FetchedDailies(dailies));
+                let _ = self.tx_event.send(Event::FetchedDailies(dailies));
             }
             Err(err) => debug!("Error fetching Dailies: {:?}", err),
         }
