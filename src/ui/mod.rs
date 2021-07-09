@@ -71,7 +71,7 @@ impl UI {
             tab_names,
             status_view,
             quit: false,
-            current_tab: config.starting_tab,
+            current_tab: config.starting_tab - 1,
         }
     }
 
