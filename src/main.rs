@@ -13,7 +13,7 @@ mod state;
 mod tracks;
 mod ui;
 
-use std::{fmt::Debug, rc::Rc, sync::Arc};
+use std::{fmt::Debug, rc::Rc};
 
 use ::log::debug;
 use signal_hook::consts::{SIGINT, SIGQUIT, SIGTERM};
@@ -69,7 +69,7 @@ pub async fn main() -> Result {
     let app_state = Rc::new(AppState::load("state.json"));
     let ui = UI::new(&config, app_state.clone(), tx_event.clone(), rx_event);
 
-    let client = Arc::new(CachedClient::new(config).map_err(Error::Client)?);
+    let client = CachedClient::new(config).map_err(Error::Client)?;
     let fetch = Fetch::new(client, tx_event.clone());
 
     let signals = Signals::new(&[SIGTERM, SIGINT, SIGQUIT]).map_err(Error::Signal)?;

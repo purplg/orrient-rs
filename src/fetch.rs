@@ -1,4 +1,4 @@
-use std::{collections::HashSet, sync::Arc, time::Duration};
+use std::{collections::HashSet, time::Duration};
 
 use log::debug;
 use tokio::sync::mpsc::UnboundedSender;
@@ -10,13 +10,13 @@ use crate::{
 };
 
 pub struct Fetch {
-    client: Arc<CachedClient>,
+    client: CachedClient,
     tx_event: UnboundedSender<Event>,
     all_achievement_ids: Vec<usize>,
 }
 
 impl Fetch {
-    pub fn new(client: Arc<CachedClient>, tx_event: UnboundedSender<Event>) -> Fetch {
+    pub fn new(client: CachedClient, tx_event: UnboundedSender<Event>) -> Fetch {
         Fetch {
             client,
             tx_event,
