@@ -118,7 +118,7 @@ fn default_gateway() -> String {
 }
 
 fn default_cache_path() -> String {
-    String::from("cache.json")
+    String::from("cache.ron")
 }
 
 fn default_cache_age() -> Duration {
@@ -226,7 +226,7 @@ apikey:
 # offline: false
 #
 # Change the location of the cache file
-# cache_path: /tmp/orrient.cache.json
+# cache_path: /tmp/orrient.cache.ron
 #
 # How long (in seconds) should long-term requests be cached. This affects global data not account data
 # cache_age: 86400 # 24 hours

@@ -1,4 +1,11 @@
-use std::{cell::Cell, collections::HashSet, fs::File, io::BufWriter, path::PathBuf, sync::RwLock};
+use std::{
+    cell::Cell,
+    collections::HashSet,
+    fs::File,
+    io::{BufWriter, Read, Write},
+    path::PathBuf,
+    sync::RwLock,
+};
 
 use log::debug;
 
@@ -29,20 +36,17 @@ impl AppState {
 
     pub fn load(path: &str) -> Self {
         let path = PathBuf::from(path);
-        match File::open(&path) {
-            Ok(file) => match serde_json::from_reader(&file) {
-                Ok(state) => {
-                    let mut state: AppState = state;
-                    state.path = path;
-                    state
-                }
-                Err(err) => {
-                    debug!("Error parsing state file: {}", err);
-                    Self::new(path)
-                }
-            },
+        let mut content = String::default();
+
+        if let Err(err) = File::open(&path).and_then(|mut file| file.read_to_string(&mut content)) {
+            debug!("Error reading state file: {}", err);
+            return Self::new(path);
+        }
+
+        match ron::from_str::<Self>(&content) {
+            Ok(state) => state,
             Err(err) => {
-                debug!("Error opening state file: {}", err);
+                debug!("Error parsing state file: {}", err);
                 Self::new(path)
             }
         }
@@ -113,8 +117,10 @@ impl AppState {
     }
 
     fn write(&self) -> Result<(), Box<dyn std::error::Error>> {
-        let bw = BufWriter::new(File::create(&self.path)?);
-        let _ = serde_json::to_writer(bw, &self)?;
+        let mut bw = BufWriter::new(File::create(&self.path)?);
+        if let Err(err) = bw.write_all(ron::to_string(self)?.as_bytes()) {
+            debug!("Error writing state to disk: {}", err)
+        }
         Ok(())
     }
 }

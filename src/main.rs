@@ -66,7 +66,7 @@ pub async fn main() -> Result {
 
     let (tx_event, rx_event) = mpsc::unbounded_channel::<Event>();
 
-    let app_state = Rc::new(AppState::load("state.json"));
+    let app_state = Rc::new(AppState::load("state.ron"));
     let ui = UI::new(&config, app_state.clone(), tx_event.clone(), rx_event);
 
     let client = CachedClient::new(config).map_err(Error::Client)?;

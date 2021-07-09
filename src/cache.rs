@@ -2,6 +2,7 @@ use chrono::serde::ts_seconds;
 use std::collections::HashSet;
 use std::io::BufReader;
 use std::io::Read;
+use std::io::Write;
 use std::ops::Add;
 use std::path::Path;
 use std::path::PathBuf;
@@ -92,13 +93,13 @@ impl Cache {
     ) -> Result<CacheContents, Box<dyn std::error::Error>> {
         let file = File::open(&path)?;
         let mut reader = BufReader::new(&file);
-        let mut contents_str = String::new();
+        let mut contents = String::new();
         if use_compression {
-            GzDecoder::new(reader).read_to_string(&mut contents_str)
+            GzDecoder::new(reader).read_to_string(&mut contents)
         } else {
-            reader.read_to_string(&mut contents_str)
+            reader.read_to_string(&mut contents)
         }?;
-        Ok(serde_json::from_str::<CacheContents>(&contents_str)?)
+        Ok(ron::from_str::<CacheContents>(&contents)?)
     }
 
     pub fn write(&self) -> Result<(), Box<dyn std::error::Error>> {
@@ -111,12 +112,14 @@ impl Cache {
         {
             debug!("Writing cache to: {:?}", self.path);
             let file = File::create(&self.path)?;
-            let writer = BufWriter::new(file);
+            let mut writer = BufWriter::new(file);
             if self.compression {
-                let writer = GzEncoder::new(writer, Compression::fast());
-                serde_json::to_writer(writer, &self.contents)
+                let mut writer = GzEncoder::new(writer, Compression::fast());
+                let contents = ron::to_string(&self.contents)?;
+                writer.write(contents.as_bytes())
             } else {
-                serde_json::to_writer(writer, &self.contents)
+                let contents = ron::to_string(&self.contents)?;
+                writer.write(contents.as_bytes())
             }?;
         }
         Ok(())
