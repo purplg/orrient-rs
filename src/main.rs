@@ -67,11 +67,10 @@ pub async fn main() -> Result {
     let (tx_event, rx_event) = mpsc::unbounded_channel::<Event>();
 
     let app_state = Rc::new(AppState::load("state.json"));
+    let ui = UI::new(&config, app_state.clone(), tx_event.clone(), rx_event);
 
     let client = Arc::new(CachedClient::new(config).map_err(Error::Client)?);
-
     let fetch = Fetch::new(client, tx_event.clone());
-    let ui = UI::new(app_state.clone(), tx_event.clone(), rx_event);
 
     let signals = Signals::new(&[SIGTERM, SIGINT, SIGQUIT]).map_err(Error::Signal)?;
 

@@ -25,6 +25,7 @@ use tui::{
 };
 
 use crate::{
+    config::Config,
     events::Event,
     input::{Input, InputEvent, InputKind},
     state::AppState,
@@ -47,6 +48,7 @@ pub struct UI {
 
 impl UI {
     pub fn new(
+        config: &Config,
         app_state: Rc<AppState>,
         tx_event: UnboundedSender<Event>,
         rx_event: UnboundedReceiver<Event>,
@@ -69,7 +71,7 @@ impl UI {
             tab_names,
             status_view,
             quit: false,
-            current_tab: 0, // TODO populate default from config
+            current_tab: config.starting_tab,
         }
     }
 
