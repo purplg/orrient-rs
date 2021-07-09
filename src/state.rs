@@ -54,7 +54,7 @@ impl AppState {
                 self.invalidated.set(true);
             }
         }
-        self.try_write();
+        self.write_invalid();
     }
 
     pub fn remove_bookmark(&self, bookmark: Bookmark) {
@@ -63,7 +63,7 @@ impl AppState {
                 self.invalidated.set(true);
             }
         }
-        self.try_write();
+        self.write_invalid();
     }
 
     pub fn bookmarks(&self) -> HashSet<Bookmark> {
@@ -84,7 +84,7 @@ impl AppState {
                 self.invalidated.set(true);
             }
         }
-        self.try_write();
+        self.write_invalid();
     }
 
     pub fn tracked_items(&self) -> HashSet<Track> {
@@ -103,7 +103,7 @@ impl AppState {
         }
     }
 
-    fn try_write(&self) {
+    fn write_invalid(&self) {
         if self.invalidated.get() {
             match self.write() {
                 Ok(_) => self.invalidated.set(false),
