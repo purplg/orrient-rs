@@ -139,7 +139,7 @@ impl View for TimerView {
         );
     }
 
-    fn handle_input_event(&mut self, _: &InputEvent) -> bool {
+    fn handle_input(&mut self, _: &InputEvent) -> bool {
         false
     }
 

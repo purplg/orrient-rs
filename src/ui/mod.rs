@@ -97,7 +97,7 @@ impl UI {
             }
             select! {
                 Some(input_event) = rx_input.recv() => {
-                    self.handle_input_event(input_event);
+                    self.handle_input(input_event);
                     self.render(&mut terminal);
                 },
                 Some(view_event) = self.rx_event.recv() => {
@@ -117,12 +117,12 @@ impl UI {
         }
     }
 
-    pub fn handle_input_event(&mut self, input_event: InputEvent) {
+    pub fn handle_input(&mut self, input_event: InputEvent) {
         // Pass input events to current view
         if !self
             .tabs
             .get_mut(self.current_tab)
-            .map_or(false, |tab| tab.handle_input_event(&input_event))
+            .map_or(false, |tab| tab.handle_input(&input_event))
         {
             // If view doesn't handle input, handle it locally
             match input_event.input {

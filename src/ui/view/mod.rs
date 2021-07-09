@@ -17,6 +17,6 @@ pub trait View {
 
     fn draw(&mut self, _: &mut Frame<CrosstermBackend<Stdout>>, _: Rect);
 
-    fn handle_input_event(&mut self, _: &InputEvent) -> bool;
+    fn handle_input(&mut self, _: &InputEvent) -> bool;
     fn handle_event(&mut self, _: &Event);
 }

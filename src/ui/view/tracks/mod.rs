@@ -199,7 +199,7 @@ impl View for TracksView {
         self.add_track_popup.draw(frame, area);
     }
 
-    fn handle_input_event(&mut self, event: &InputEvent) -> bool {
+    fn handle_input(&mut self, event: &InputEvent) -> bool {
         if self.add_track_popup.handle_input(event) {
             return true;
         }
