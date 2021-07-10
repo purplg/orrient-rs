@@ -16,4 +16,5 @@ pub enum Event {
     AchievementsLoaded(HashSet<Achievement>),
     FetchedDailies(Dailies),
     StatusMessage(String),
+    ClearStatusMessage,
 }

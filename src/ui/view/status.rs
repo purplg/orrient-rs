@@ -54,9 +54,15 @@ impl View for StatusView {
     }
 
     fn handle_event(&mut self, event: &Event) {
-        if let Event::StatusMessage(message) = event {
-            self.message = message.clone();
-            self.start_timeout();
+        match event {
+            Event::StatusMessage(message) => {
+                self.message = message.clone();
+                self.start_timeout();
+            }
+            Event::ClearStatusMessage => {
+                self.message.clear();
+            }
+            _ => {}
         }
     }
 }
@@ -64,6 +70,6 @@ impl View for StatusView {
 fn status_timeout(tx_event: UnboundedSender<Event>) -> JoinHandle<()> {
     tokio::spawn(async move {
         tokio::time::sleep(Duration::from_secs(5)).fuse().await;
-        let _ = tx_event.send(Event::StatusMessage("".to_string()));
+        let _ = tx_event.send(Event::ClearStatusMessage);
     })
 }
