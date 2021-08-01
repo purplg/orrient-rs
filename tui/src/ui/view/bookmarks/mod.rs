@@ -13,12 +13,10 @@ use tui::{
 };
 
 use crate::{
-    bookmarks::Bookmark,
-    events::Event,
     input::{InputEvent, InputKind},
-    state::AppState,
     ui::widget::list_selection::{CursorMovement, ListSelection},
 };
+use orrient::{bookmarks::Bookmark, events::Event, state::AppState};
 
 use self::popup::CustomBookmarkPopupState;
 

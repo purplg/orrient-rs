@@ -6,7 +6,7 @@ use tui::{
     widgets::{Row, Table},
 };
 
-use crate::api::{AccountAchievement, Achievement, Reward};
+use orrient::api::{AccountAchievement, Achievement, Reward};
 
 pub struct AchievementInfo;
 

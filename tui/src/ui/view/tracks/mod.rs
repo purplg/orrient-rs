@@ -1,23 +1,20 @@
 pub mod popup;
 
-use crate::{
-    input::{InputEvent, InputKind},
-    ui::{
-        component::{
-            achievement_info::AchievementInfo, achievement_progress_info::AchievementProgressInfo,
-        },
-        view::tracks::popup::CustomTrackPopupState,
-        widget::list_selection::CursorMovement,
+use crate::input::{InputEvent, InputKind};
+use crate::ui::{
+    component::{
+        achievement_info::AchievementInfo, achievement_progress_info::AchievementProgressInfo,
     },
+    view::tracks::popup::CustomTrackPopupState,
+    widget::list_selection::{CursorMovement, ListSelection},
 };
 use std::{collections::HashMap, io::Stdout, rc::Rc};
 
-use crate::{
+use orrient::{
     api::{AccountAchievement, Achievement},
     events::Event,
     state::AppState,
     tracks::Track,
-    ui::widget::list_selection::ListSelection,
 };
 
 use tokio::sync::mpsc::UnboundedSender;

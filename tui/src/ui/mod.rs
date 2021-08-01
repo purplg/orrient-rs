@@ -24,12 +24,8 @@ use tui::{
     Terminal,
 };
 
-use crate::{
-    config::Config,
-    events::Event,
-    input::{Input, InputEvent, InputKind},
-    state::AppState,
-};
+use crate::input::{Input, InputEvent, InputKind};
+use orrient::{config::Config, events::Event, state::AppState};
 
 use self::view::{
     achievements::AchievementsView, bookmarks::BookmarksView, dailies::DailiesView,

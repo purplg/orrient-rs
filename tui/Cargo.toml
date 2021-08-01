@@ -1,0 +1,18 @@
+[package]
+name = "orrient-tui"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+orrient = { path = "../" }
+futures = "^0.3"
+tokio = { version = "^1.6.0", features = ["full"] }
+tui = { version = "^0.15.0", default-features = false, features = ['crossterm'] }
+log = "^0.4.14"
+fern = "^0.6.0"
+chrono = { version =  "^0.4.19", features = [ 'serde' ] }
+crossterm = { version = "^0.20.0", features = ['event-stream'] }
+signal-hook = "^0.3.9"
+signal-hook-tokio = { version = "^0.3.0", features = ['futures-v0_3'] }
+copypasta = "^0.7.1"
+gw2timers = "^0.4.0"

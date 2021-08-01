@@ -5,7 +5,7 @@ use tui::{
     widgets::Gauge,
 };
 
-use crate::api::{AccountAchievement, Achievement};
+use orrient::api::{AccountAchievement, Achievement};
 
 pub struct AchievementProgressInfo;
 

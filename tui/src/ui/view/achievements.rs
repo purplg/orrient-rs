@@ -1,10 +1,21 @@
 use crate::{
     input::{InputEvent, InputKind},
-    ui::widget::{
-        list_selection::CursorMovement,
-        text_box::{Textbox, TextboxState},
+    ui::{
+        component::achievement_info::AchievementInfo,
+        widget::{
+            list_selection::{CursorMovement, ListSelection},
+            text_box::{Textbox, TextboxState},
+        },
     },
 };
+
+use orrient::{
+    api::{AccountAchievement, Achievement},
+    events::Event,
+    state::AppState,
+    tracks::Track,
+};
+
 use std::{
     collections::{BTreeMap, HashMap},
     io::Stdout,
@@ -19,14 +30,6 @@ use tui::{
     text::Text,
     widgets::{Block, Borders, List, ListItem, ListState},
     Frame,
-};
-
-use crate::{
-    api::{AccountAchievement, Achievement},
-    events::Event,
-    state::AppState,
-    tracks::Track,
-    ui::{component::achievement_info::AchievementInfo, widget::list_selection::ListSelection},
 };
 
 use super::View;

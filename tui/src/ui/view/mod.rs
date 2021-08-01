@@ -10,7 +10,8 @@ use std::io::Stdout;
 
 use tui::{backend::CrosstermBackend, layout::Rect, Frame};
 
-use crate::{events::Event, input::InputEvent};
+use crate::input::InputEvent;
+use orrient::events::Event;
 
 pub trait View {
     fn name(&self) -> &'static str;

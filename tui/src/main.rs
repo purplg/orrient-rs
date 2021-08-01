@@ -1,42 +1,25 @@
-mod api;
-mod bookmarks;
-mod cache;
-mod cli;
-mod client;
-mod config;
-mod events;
-mod fetch;
 mod input;
-mod log;
 mod signals;
-mod state;
-mod tracks;
 mod ui;
 
 use std::{fmt::Debug, rc::Rc};
 
 use ::log::debug;
-use signal_hook::consts::{SIGINT, SIGQUIT, SIGTERM};
-use signal_hook_tokio::Signals;
-use state::AppState;
-use tokio::{select, sync::mpsc};
-
-use crate::{
+use orrient::{
     cli::{config_path, Options},
-    client::CachedClient,
-    config::Config,
+    client::{self, CachedClient},
+    config::{self, Config},
     events::Event,
     fetch::Fetch,
     log::setup_logger,
-    signals::handle_signals,
-    ui::UI,
+    state::AppState,
 };
+use signals::handle_signals;
+use ui::UI;
 
-#[macro_use]
-extern crate serde_derive;
-extern crate fern;
-extern crate getopts;
-extern crate signal_hook;
+use signal_hook::consts::{SIGINT, SIGQUIT, SIGTERM};
+use signal_hook_tokio::SignalsInfo;
+use tokio::{select, sync::mpsc};
 
 type Result = std::result::Result<(), Error>;
 
@@ -72,7 +55,7 @@ pub async fn main() -> Result {
     let client = CachedClient::new(config).map_err(Error::Client)?;
     let fetch = Fetch::new(client, tx_event.clone());
 
-    let signals = Signals::new(&[SIGTERM, SIGINT, SIGQUIT]).map_err(Error::Signal)?;
+    let signals = SignalsInfo::new(&[SIGTERM, SIGINT, SIGQUIT]).map_err(Error::Signal)?;
 
     select! {
         _ = handle_signals(signals, tx_event) => {}

@@ -1,7 +1,7 @@
 use std::{io::Stdout, time::Duration};
 
-use crate::{events::Event, input::InputEvent};
 use futures::FutureExt;
+use orrient::events::Event;
 use tokio::{sync::mpsc::UnboundedSender, task::JoinHandle};
 use tui::{
     backend::CrosstermBackend,
@@ -9,6 +9,8 @@ use tui::{
     widgets::{Block, Borders, Paragraph},
     Frame,
 };
+
+use crate::input::InputEvent;
 
 use super::View;
 

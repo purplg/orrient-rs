@@ -14,7 +14,8 @@ use tui::{
     Frame,
 };
 
-use crate::{events::Event, input::InputEvent};
+use crate::input::InputEvent;
+use orrient::events::Event;
 
 use super::View;
 

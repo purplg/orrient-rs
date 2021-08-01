@@ -9,10 +9,10 @@ use tui::{
     Frame,
 };
 
-use crate::{
+use crate::input::InputEvent;
+use orrient::{
     api::{Achievement, Dailies, Daily},
     events::Event,
-    input::InputEvent,
 };
 
 use super::View;
