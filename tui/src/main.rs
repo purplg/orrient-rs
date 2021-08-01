@@ -1,6 +1,4 @@
-mod input;
 mod signals;
-mod ui;
 
 use std::{fmt::Debug, rc::Rc};
 
@@ -14,8 +12,8 @@ use orrient::{
     log::setup_logger,
     state::AppState,
 };
+use orrient_tui::UI;
 use signals::handle_signals;
-use ui::UI;
 
 use signal_hook::consts::{SIGINT, SIGQUIT, SIGTERM};
 use signal_hook_tokio::SignalsInfo;

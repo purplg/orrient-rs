@@ -1,11 +1,9 @@
 use crate::{
+    component::achievement_info::AchievementInfo,
     input::{InputEvent, InputKind},
-    ui::{
-        component::achievement_info::AchievementInfo,
-        widget::{
-            list_selection::{CursorMovement, ListSelection},
-            text_box::{Textbox, TextboxState},
-        },
+    widget::{
+        list_selection::{CursorMovement, ListSelection},
+        text_box::{Textbox, TextboxState},
     },
 };
 

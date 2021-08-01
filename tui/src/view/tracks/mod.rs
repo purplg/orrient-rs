@@ -1,7 +1,7 @@
 pub mod popup;
 
 use crate::input::{InputEvent, InputKind};
-use crate::ui::{
+use crate::{
     component::{
         achievement_info::AchievementInfo, achievement_progress_info::AchievementProgressInfo,
     },

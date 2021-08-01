@@ -1,4 +1,5 @@
 pub mod component;
+mod input;
 mod view;
 mod widget;
 

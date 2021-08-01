@@ -14,7 +14,7 @@ use tui::{
 
 use crate::{
     input::{InputEvent, InputKind},
-    ui::widget::list_selection::{CursorMovement, ListSelection},
+    widget::list_selection::{CursorMovement, ListSelection},
 };
 use orrient::{bookmarks::Bookmark, events::Event, state::AppState};
 
